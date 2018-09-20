@@ -11,7 +11,10 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.github.dcendents.android-maven'
-group='com.github.readium'
+
+group='com.github.codetoart'
+project.archivesBaseName = rootProject.name
+version = "1.0.3-1"
 
 android {
     flavorDimensions "testapp"
@@ -41,16 +44,20 @@ android {
         devTestappWithLcp {
             dimension "testapp"
         }
+        devFolioReader {
+            dimension "testapp"
+        }
     }
 
     // default build flavour
-    defaultPublishConfig "intTestappDebug"
+    defaultPublishConfig "devFolioReaderRelease"
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation 'com.jakewharton.timber:timber:4.7.1'
+
     intTestappImplementation 'com.github.readium:r2-shared-kotlin:develop-SNAPSHOT'
     intTestappWithLcpImplementation 'com.github.readium:r2-shared-kotlin:develop-SNAPSHOT'
     if (findProject(':r2-shared')) {
@@ -59,6 +66,7 @@ dependencies {
     }
     intTestappImplementation 'com.github.readium:r2-shared-kotlin:develop-SNAPSHOT'
     intTestappWithLcpImplementation 'com.github.readium:r2-shared-kotlin:develop-SNAPSHOT'
+    devFolioReaderImplementation 'com.github.codetoart:r2-shared-kotlin:3631c82'
 
     //TODO conflicting support libraries, excluding these
     implementation('com.mcxiaoke.koi:core:0.5.5') {
@@ -87,4 +95,14 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+}
+
+// Builds a jar with source files
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
 }
