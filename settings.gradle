@@ -1,1 +1,3 @@
 include ':r2-streamer'
+
+rootProject.name = "r2-streamer-kotlin"
