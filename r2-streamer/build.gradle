@@ -66,7 +66,7 @@ dependencies {
     }
     intTestappImplementation 'com.github.readium:r2-shared-kotlin:develop-SNAPSHOT'
     intTestappWithLcpImplementation 'com.github.readium:r2-shared-kotlin:develop-SNAPSHOT'
-    devFolioReaderImplementation 'com.github.codetoart:r2-shared-kotlin:3631c82'
+    devFolioReaderImplementation 'com.github.codetoart:r2-shared-kotlin:1.0.3-2'
 
     //TODO conflicting support libraries, excluding these
     implementation('com.mcxiaoke.koi:core:0.5.5') {
