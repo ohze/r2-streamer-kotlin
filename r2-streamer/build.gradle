@@ -14,7 +14,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.codetoart'
 project.archivesBaseName = rootProject.name
-version = "1.0.3-2"
+version = "1.0.3-3.dev"
 
 android {
     flavorDimensions "testapp"
@@ -64,8 +64,6 @@ dependencies {
         devTestappImplementation project(':r2-shared')
         devTestappWithLcpImplementation project(':r2-shared')
     }
-    intTestappImplementation 'com.github.readium:r2-shared-kotlin:develop-SNAPSHOT'
-    intTestappWithLcpImplementation 'com.github.readium:r2-shared-kotlin:develop-SNAPSHOT'
     devFolioReaderImplementation 'com.github.codetoart:r2-shared-kotlin:1.0.3-2'
 
     //TODO conflicting support libraries, excluding these

@@ -15,6 +15,7 @@ import org.nanohttpd.router.RouterNanoHTTPD
 import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.fetcher.Fetcher
+import org.readium.r2.streamer.r2_streamer_java.SearchQueryHandler
 import org.readium.r2.streamer.server.handler.*
 import java.io.File
 import java.io.InputStream
@@ -25,7 +26,7 @@ class Server(port: Int) : AbstractServer(port)
 
 abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD(port) {
 
-    //    private val SEARCH_QUERY_HANDLE = "/search"
+    private val SEARCH_QUERY_HANDLE = "/search"
     private val MANIFEST_HANDLE = "/manifest"
     private val JSON_MANIFEST_HANDLE = "/manifest.json"
     private val MANIFEST_ITEM_HANDLE = "/(.*)"
@@ -65,7 +66,6 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD(port) {
         addFont("OpenDyslexic-Regular.otf", assets, context)
     }
 
-
     fun addEpub(publication: Publication, container: Container, fileName: String, userPropertiesPath: String?) {
         val fetcher = Fetcher(publication, container, userPropertiesPath)
 
@@ -78,6 +78,7 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD(port) {
         }
         addRoute(fileName + JSON_MANIFEST_HANDLE, ManifestHandler::class.java, fetcher)
         addRoute(fileName + MANIFEST_HANDLE, ManifestHandler::class.java, fetcher)
+        addRoute(fileName + SEARCH_QUERY_HANDLE, SearchQueryHandler::class.java, fetcher)
         addRoute(fileName + MANIFEST_ITEM_HANDLE, ResourceHandler::class.java, fetcher)
         addRoute(JS_HANDLE, JSHandler::class.java, resources)
         addRoute(CSS_HANDLE, CSSHandler::class.java, resources)
@@ -99,6 +100,5 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD(port) {
             File(path).outputStream().use { input.copyTo(it) }
         }
     }
-
 }
 
