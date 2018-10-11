@@ -14,7 +14,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.codetoart'
 project.archivesBaseName = rootProject.name
-version = "1.0.3-4"
+version = "1.0.3-5"
 
 android {
     flavorDimensions "testapp"
@@ -75,8 +75,11 @@ dependencies {
         exclude module: 'support-v4'
     }
     implementation "com.android.support:appcompat-v7:$support_version"
-    implementation 'org.nanohttpd:nanohttpd:2.3.2-SNAPSHOT'
-    implementation 'org.nanohttpd:nanohttpd-nanolets:2.3.2-SNAPSHOT'
+
+    // Intend to fetch repo from jitpack.io for stable releases
+    implementation 'com.github.NanoHttpd.nanohttpd:nanohttpd:fd80618e93d'
+    implementation 'com.github.NanoHttpd.nanohttpd:nanohttpd-nanolets:fd80618e93d'
+
     implementation 'com.google.code.gson:gson:2.8.2'
     implementation 'commons-io:commons-io:2.4'
     implementation 'org.zeroturnaround:zt-zip:1.12'
