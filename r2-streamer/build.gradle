@@ -51,6 +51,10 @@ android {
 
     // default build flavour
     defaultPublishConfig "devFolioReaderRelease"
+
+    lintOptions {
+        lintConfig file("lint.xml")
+    }
 }
 
 dependencies {

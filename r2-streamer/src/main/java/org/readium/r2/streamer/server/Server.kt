@@ -15,7 +15,6 @@ import org.nanohttpd.router.RouterNanoHTTPD
 import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.fetcher.Fetcher
-import org.readium.r2.streamer.r2_streamer_java.SearchQueryHandler
 import org.readium.r2.streamer.server.handler.*
 import java.io.File
 import java.io.InputStream
