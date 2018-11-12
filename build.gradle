@@ -18,7 +18,15 @@ buildscript {
 }
 
 allprojects {
+
+    configurations.all {
+        resolutionStrategy {
+            cacheChangingModulesFor 0, 'seconds'
+        }
+    }
+
     repositories {
+        mavenLocal()
         google()
         jcenter()
         maven { url 'https://jitpack.io' }

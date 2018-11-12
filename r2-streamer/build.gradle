@@ -14,7 +14,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.codetoart'
 project.archivesBaseName = rootProject.name
-version = "1.0.3-5"
+version = "1.0.3-6"
 
 android {
     flavorDimensions "testapp"
@@ -51,6 +51,10 @@ android {
 
     // default build flavour
     defaultPublishConfig "devFolioReaderRelease"
+
+    lintOptions {
+        lintConfig file("lint.xml")
+    }
 }
 
 dependencies {
@@ -64,7 +68,9 @@ dependencies {
         devTestappImplementation project(':r2-shared')
         devTestappWithLcpImplementation project(':r2-shared')
     }
-    devFolioReaderImplementation 'com.github.codetoart:r2-shared-kotlin:1.0.3-2'
+    devFolioReaderImplementation("com.github.codetoart:r2-shared-kotlin:1.0.3-3") {
+        changing = true
+    }
 
     //TODO conflicting support libraries, excluding these
     implementation('com.mcxiaoke.koi:core:0.5.5') {

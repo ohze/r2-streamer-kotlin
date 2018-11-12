@@ -14,6 +14,13 @@
     <application
         android:allowBackup="false"
         android:supportsRtl="true"
-        tools:replace="android:allowBackup"/>
+        tools:replace="android:allowBackup">
+
+        <provider
+            android:name=".ClientAppContext"
+            android:authorities="${applicationId}.provider.clientappcontext"
+            android:exported="false" />
+
+    </application>
 
 </manifest>
