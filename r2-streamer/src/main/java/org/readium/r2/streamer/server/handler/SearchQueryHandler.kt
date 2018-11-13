@@ -1,5 +1,6 @@
 package org.readium.r2.streamer.server.handler
 
+import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -56,10 +57,7 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
 
         try {
             val fetcher = uriResource.initParameter(Fetcher::class.java)
-
-            val queryParameter = session.queryParameterString
-            val startIndex = queryParameter.indexOf("=")
-            val searchQueryEncoded = queryParameter.substring(startIndex + 1)
+            val searchQueryEncoded = session.parameters["query"]?.get(0)
             searchQuery = URLDecoder.decode(searchQueryEncoded, "UTF-8")
 
             rangySolution(fetcher)
@@ -78,6 +76,7 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         return response
     }
 
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     private fun rangySolution(fetcher: Fetcher) {
 
         spineCount = fetcher.publication.spine.size
@@ -106,6 +105,7 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         Log.d(LOG_TAG, "-> rangySolution -> $spineTracker / $spineCount done")
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private fun runWebview(link: Link, fileData: String) {
         Log.v(LOG_TAG, "-> runWebview -> ${link.href}")
 
@@ -115,7 +115,7 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         webView.settings.javaScriptEnabled = true
 
         val scriptTagTemplate = "<script type=\"text/javascript\" src=\"%s\"></script>\n"
-        var jsInjection = String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/Bridge.js")
+        var jsInjection = String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/SearchBridge.js")
         jsInjection += String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/rangy-core.js")
         jsInjection += String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/rangy-textrange.js")
         jsInjection += String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/readium-cfi.umd.js")
@@ -123,6 +123,8 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         val modifiedFileData = fileData.replace("</head>", "$jsInjection</head>")
 
         webView.webViewClient = object : WebViewClient() {
+
+            @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
             override fun onPageFinished(view: WebView?, url: String?) {
                 Log.v(LOG_TAG, "-> onPageFinished -> ${link.href}")
 
