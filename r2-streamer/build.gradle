@@ -14,15 +14,15 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.codetoart'
 project.archivesBaseName = rootProject.name
-version = "1.0.3-7"
+version = "1.0.3-8.dev.1"
 
 android {
     flavorDimensions "testapp"
 
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 28
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -68,7 +68,7 @@ dependencies {
         devTestappImplementation project(':r2-shared')
         devTestappWithLcpImplementation project(':r2-shared')
     }
-    devFolioReaderImplementation("com.github.codetoart:r2-shared-kotlin:1.0.3-4") {
+    devFolioReaderImplementation("com.github.codetoart:r2-shared-kotlin:1.0.3-5.dev.1") {
         changing = true
     }
 
