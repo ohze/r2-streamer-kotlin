@@ -29,11 +29,8 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         val LOG_TAG: String = SearchQueryHandler::class.java.simpleName
     }
 
-    private lateinit var searchQuery: String
-    private var spineCount: Int = 0
-    private var spineTracker: Int = 0
     private val searchLocators: MutableList<Locator> = mutableListOf()
-    private val webviewList: MutableList<WebView> = mutableListOf()
+    private lateinit var webView: WebView
 
     override fun getStatus(): IStatus {
         return Status.OK
@@ -49,69 +46,58 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
 
     override fun get(uriResource: RouterNanoHTTPD.UriResource,
                      urlParams: MutableMap<String, String>?, session: IHTTPSession): Response {
+        Log.i(LOG_TAG, "-> ${session.method} ${session.uri}")
 
-        val method = session.method
-        val uri = session.uri
-        Log.i(LOG_TAG, "-> $method $uri")
-        var response: Response
-
-        try {
+        return try {
             val fetcher = uriResource.initParameter(Fetcher::class.java)
+            val spineIndex = session.parameters["spineIndex"]?.get(0)?.toInt() ?: -1
+            val link = fetcher.publication.spine[spineIndex]
             val searchQueryEncoded = session.parameters["query"]?.get(0)
-            searchQuery = URLDecoder.decode(searchQueryEncoded, "UTF-8")
+            val searchQuery = URLDecoder.decode(searchQueryEncoded, "UTF-8")
 
-            rangySolution(fetcher)
+            val responseSearchLocators = rangySolution(link, searchQuery, fetcher)
 
             val objectMapper = ObjectMapper()
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
-            val searchLocatorsJson = objectMapper.writeValueAsString(searchLocators)
-            response = Response.newFixedLengthResponse(Status.OK, mimeType, searchLocatorsJson)
+            val searchLocatorsJson = objectMapper.writeValueAsString(responseSearchLocators)
+            Response.newFixedLengthResponse(Status.OK, mimeType, searchLocatorsJson)
 
         } catch (e: Exception) {
             Log.e(LOG_TAG, "-> get -> ", e)
-            response = Response.newFixedLengthResponse(Status.INTERNAL_ERROR, mimeType,
+            Response.newFixedLengthResponse(Status.INTERNAL_ERROR, mimeType,
                     ResponseStatus.FAILURE_RESPONSE)
         }
-
-        return response
     }
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-    private fun rangySolution(fetcher: Fetcher) {
+    private fun rangySolution(link: Link, searchQuery: String, fetcher: Fetcher):
+            MutableList<Locator> {
+        Log.d(LOG_TAG, "-> rangySolution -> ${link.href}")
 
-        spineCount = fetcher.publication.spine.size
+        if (link.typeLink != "application/xhtml+xml")
+            return mutableListOf()
 
-        for (link in fetcher.publication.spine) {
-            Log.d(LOG_TAG, "-> rangySolution -> ${link.href}")
+        val href = link.href!!.substring(1)
+        val fileData = String(fetcher.container.data(href))
 
-            if (link.typeLink != "application/xhtml+xml") {
-                ++spineTracker
-                continue
-            }
-
-            val href = link.href!!.substring(1)
-            val fileData = String(fetcher.container.data(href))
-
-            val handler = Handler(Looper.getMainLooper())
-            handler.post {
-                runWebview(link, fileData)
-            }
+        val handler = Handler(Looper.getMainLooper())
+        handler.postAtFrontOfQueue {
+            runWebview(link, searchQuery, fileData)
         }
 
         synchronized(this) {
-            (this as java.lang.Object).wait(60000)
+            (this as java.lang.Object).wait(10000)
         }
 
-        Log.d(LOG_TAG, "-> rangySolution -> $spineTracker / $spineCount done")
+        return searchLocators
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun runWebview(link: Link, fileData: String) {
+    private fun runWebview(link: Link, searchQuery: String, fileData: String) {
         Log.v(LOG_TAG, "-> runWebview -> ${link.href}")
 
         val context = ClientAppContext.get()
-        val webView = WebView(context)
-        webviewList.add(webView)
+        webView = WebView(context)
         webView.settings.javaScriptEnabled = true
 
         val scriptTagTemplate = "<script type=\"text/javascript\" src=\"%s\"></script>\n"
@@ -135,13 +121,8 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
                     Log.v(LOG_TAG, "-> getLocatorsUsingRangySearch returned -> ${link.href}")
 
                     addLocators(value, link)
-                    ++spineTracker
-
-                    if (spineCount == spineTracker) {
-                        Log.d(LOG_TAG, "-> Done")
-                        synchronized(this@SearchQueryHandler) {
-                            (this@SearchQueryHandler as java.lang.Object).notify()
-                        }
+                    synchronized(this@SearchQueryHandler) {
+                        (this@SearchQueryHandler as java.lang.Object).notify()
                     }
                 }
             }
