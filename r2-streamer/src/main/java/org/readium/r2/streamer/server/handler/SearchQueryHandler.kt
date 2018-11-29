@@ -86,7 +86,7 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         }
 
         synchronized(this) {
-            (this as java.lang.Object).wait(10000)
+            (this as java.lang.Object).wait(60000)
         }
 
         return searchLocators
