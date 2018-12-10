@@ -14,15 +14,15 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.codetoart'
 project.archivesBaseName = rootProject.name
-version = "1.0.3-7"
+version = "1.0.3-8.dev.3"
 
 android {
     flavorDimensions "testapp"
 
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 28
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -68,7 +68,7 @@ dependencies {
         devTestappImplementation project(':r2-shared')
         devTestappWithLcpImplementation project(':r2-shared')
     }
-    devFolioReaderImplementation("com.github.codetoart:r2-shared-kotlin:1.0.3-4") {
+    devFolioReaderImplementation("com.github.codetoart:r2-shared-kotlin:1.0.3-5.dev.2") {
         changing = true
     }
 
@@ -83,16 +83,16 @@ dependencies {
     implementation "com.android.support:appcompat-v7:$support_version"
 
     // Intend to fetch repo from jitpack.io for stable releases
-    implementation 'com.github.NanoHttpd.nanohttpd:nanohttpd:fd80618e93d'
-    implementation 'com.github.NanoHttpd.nanohttpd:nanohttpd-nanolets:fd80618e93d'
+    api 'com.github.NanoHttpd.nanohttpd:nanohttpd:fd80618e93d'
+    api 'com.github.NanoHttpd.nanohttpd:nanohttpd-nanolets:fd80618e93d'
 
-    implementation 'com.google.code.gson:gson:2.8.2'
+    implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'commons-io:commons-io:2.4'
     implementation 'org.zeroturnaround:zt-zip:1.12'
     implementation 'joda-time:joda-time:2.9.9'
     implementation 'nl.komponents.kovenant:kovenant:3.3.0'
 
-    final JACKSON_VERSION = '2.8.6'
+    final JACKSON_VERSION = '2.9.7'
     implementation "com.fasterxml.jackson.core:jackson-core:$JACKSON_VERSION"
     implementation "com.fasterxml.jackson.core:jackson-annotations:$JACKSON_VERSION"
     implementation "com.fasterxml.jackson.core:jackson-databind:$JACKSON_VERSION"
