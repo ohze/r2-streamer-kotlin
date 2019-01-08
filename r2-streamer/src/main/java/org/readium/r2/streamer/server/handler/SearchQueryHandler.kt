@@ -51,7 +51,7 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         return try {
             val fetcher = uriResource.initParameter(Fetcher::class.java)
             val spineIndex = session.parameters["spineIndex"]?.get(0)?.toInt() ?: -1
-            val link = fetcher.publication.spine[spineIndex]
+            val link = fetcher.publication.readingOrder[spineIndex]
             val searchQueryEncoded = session.parameters["query"]?.get(0)
             val searchQuery = URLDecoder.decode(searchQueryEncoded, "UTF-8")
 
