@@ -14,7 +14,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.codetoart'
 project.archivesBaseName = rootProject.name
-version = "1.0.4-2.dev.2"
+version = "1.0.4-2"
 
 android {
     flavorDimensions "testapp"
@@ -68,7 +68,7 @@ dependencies {
         devTestappImplementation project(':r2-shared')
         devTestappWithLcpImplementation project(':r2-shared')
     }
-    devFolioReaderImplementation("com.github.codetoart:r2-shared-kotlin:1.0.4-2.dev.1") {
+    devFolioReaderImplementation("com.github.codetoart:r2-shared-kotlin:1.0.4-2") {
         changing = true
     }
 
