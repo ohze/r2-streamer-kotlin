@@ -1,6 +1,6 @@
 
-function getLocatorsUsingRangySearch(searchQuery) {
-    console.log("-> getLocatorsUsingRangySearch -> " + searchQuery);
+function getLocatorsUsingRangyFind(searchQuery) {
+    console.log("-> getLocatorsUsingRangyFind -> " + searchQuery);
 
     var rangyRange = rangy.createRange();
     var locators = [];
@@ -14,6 +14,24 @@ function getLocatorsUsingRangySearch(searchQuery) {
         locator.title = title;
         locators.push(locator);
         rangyRange.collapse(false);
+    }
+
+    return locators;
+}
+
+function getLocatorsUsingWindowFind(searchQuery) {
+    console.log("-> getLocatorsUsingWindowFind -> " + searchQuery);
+
+    var locators = [];
+    var title = parseChapterTitle();
+    window.getSelection().removeAllRanges();
+
+    while (window.find(searchQuery)) {
+
+        var range = window.getSelection().getRangeAt(0);
+        var locator = constructSearchLocator(range);
+        locator.title = title;
+        locators.push(locator);
     }
 
     return locators;
@@ -48,34 +66,6 @@ function constructSearchLocator(range) {
     return locator;
 }
 
-/*function getBeforeCharacters(beforeRange, offset) {
-
-    var selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(beforeRange);
-    var beforeCharacters = selection.toString();
-    selection.removeAllRanges();
-
-    var result = beforeCharacters.slice(-offset);
-    if (offset < beforeCharacters.length)
-        result = "..." + result;
-    return result;
-}
-
-function getAfterCharacters(afterRange, offset) {
-
-    var selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(afterRange);
-    var afterCharacters = selection.toString();
-    selection.removeAllRanges();
-
-    var result = afterCharacters.slice(0, offset);
-    if (offset < afterCharacters.length)
-        result += "...";
-    return result;
-}*/
-
 function getBeforeCharacters(before, offset) {
 
     var result = before.slice(-offset);
@@ -91,8 +81,8 @@ function getAfterCharacters(after, offset) {
     var result = after.slice(0, offset);
     if (offset < after.length)
         result += "...";
-    result = result.replace(/(\r\n|\n|\r)/gm," ");
-    result = result.replace(/\s+/g," ");
+    result = result.replace(/(\r\n|\n|\r)/gm, " ");
+    result = result.replace(/\s+/g, " ");
     return result;
 }
 

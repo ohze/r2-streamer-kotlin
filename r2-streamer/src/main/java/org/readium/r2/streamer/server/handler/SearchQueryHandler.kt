@@ -55,7 +55,8 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
             val searchQueryEncoded = session.parameters["query"]?.get(0)
             val searchQuery = URLDecoder.decode(searchQueryEncoded, "UTF-8")
 
-            val responseSearchLocators = rangySolution(link, searchQuery, fetcher)
+            //val responseSearchLocators = rangyFindSolution(link, searchQuery, fetcher)
+            val responseSearchLocators = windowFindSolution(link, searchQuery, fetcher)
 
             val objectMapper = ObjectMapper()
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -70,9 +71,9 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
     }
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-    private fun rangySolution(link: Link, searchQuery: String, fetcher: Fetcher):
+    private fun rangyFindSolution(link: Link, searchQuery: String, fetcher: Fetcher):
             MutableList<Locator> {
-        Log.d(LOG_TAG, "-> rangySolution -> ${link.href}")
+        Log.d(LOG_TAG, "-> rangyFindSolution -> ${link.href}")
 
         if (link.typeLink != "application/xhtml+xml")
             return mutableListOf()
@@ -82,7 +83,7 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
 
         val handler = Handler(Looper.getMainLooper())
         handler.postAtFrontOfQueue {
-            runWebview(link, searchQuery, fileData)
+            runWebviewForRangyFind(link, searchQuery, fileData)
         }
 
         synchronized(this) {
@@ -93,18 +94,19 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun runWebview(link: Link, searchQuery: String, fileData: String) {
-        Log.v(LOG_TAG, "-> runWebview -> ${link.href}")
+    private fun runWebviewForRangyFind(link: Link, searchQuery: String, fileData: String) {
+        Log.v(LOG_TAG, "-> runWebviewForRangyFind -> ${link.href}")
 
         val context = ClientAppContext.get()
         webView = WebView(context)
         webView.settings.javaScriptEnabled = true
 
         val scriptTagTemplate = "<script type=\"text/javascript\" src=\"%s\"></script>\n"
-        var jsInjection = String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/SearchBridge.js")
-        jsInjection += String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/rangy-core.js")
-        jsInjection += String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/rangy-textrange.js")
-        jsInjection += String.format(scriptTagTemplate, "file:///android_asset/org/readium/r2/streamer/readium-cfi.umd.js")
+        val assetsPath = "file:///android_asset/org/readium/r2/streamer/"
+        var jsInjection = String.format(scriptTagTemplate, assetsPath + "js/search-bridge.js")
+        jsInjection += String.format(scriptTagTemplate, assetsPath + "js/libs/rangy/rangy-core.js")
+        jsInjection += String.format(scriptTagTemplate, assetsPath + "js/libs/rangy/rangy-textrange.js")
+        jsInjection += String.format(scriptTagTemplate, assetsPath + "js/libs/cfi/develop/readium-cfi.umd.js")
 
         val modifiedFileData = fileData.replace("</head>", "$jsInjection</head>")
 
@@ -114,11 +116,72 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 Log.v(LOG_TAG, "-> onPageFinished -> ${link.href}")
 
-                var searchMethod = "javascript:getLocatorsUsingRangySearch(\"%s\")"
+                var searchMethod = "javascript:getLocatorsUsingRangyFind(\"%s\")"
                 searchMethod = String.format(searchMethod, searchQuery)
 
                 webView.evaluateJavascript(searchMethod) { value: String? ->
-                    Log.v(LOG_TAG, "-> getLocatorsUsingRangySearch returned -> ${link.href}")
+                    Log.v(LOG_TAG, "-> getLocatorsUsingRangyFind returned -> ${link.href}")
+
+                    addLocators(value, link)
+                    synchronized(this@SearchQueryHandler) {
+                        (this@SearchQueryHandler as java.lang.Object).notify()
+                    }
+                }
+            }
+        }
+
+        webView.loadDataWithBaseURL("", modifiedFileData, link.typeLink, "UTF-8", null)
+    }
+
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+    private fun windowFindSolution(link: Link, searchQuery: String, fetcher: Fetcher):
+            MutableList<Locator> {
+        Log.d(LOG_TAG, "-> windowFindSolution -> ${link.href}")
+
+        if (link.typeLink != "application/xhtml+xml")
+            return mutableListOf()
+
+        val href = link.href!!.substring(1)
+        val fileData = String(fetcher.container.data(href))
+
+        val handler = Handler(Looper.getMainLooper())
+        handler.postAtFrontOfQueue {
+            runWebviewForWindowFind(link, searchQuery, fileData)
+        }
+
+        synchronized(this) {
+            (this as java.lang.Object).wait(60000)
+        }
+
+        return searchLocators
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun runWebviewForWindowFind(link: Link, searchQuery: String, fileData: String) {
+        Log.v(LOG_TAG, "-> runWebviewForWindowFind -> ${link.href}")
+
+        val context = ClientAppContext.get()
+        webView = WebView(context)
+        webView.settings.javaScriptEnabled = true
+
+        val scriptTagTemplate = "<script type=\"text/javascript\" src=\"%s\"></script>\n"
+        val assetsPath = "file:///android_asset/org/readium/r2/streamer/"
+        var jsInjection = String.format(scriptTagTemplate, assetsPath + "js/search-bridge.js")
+        jsInjection += String.format(scriptTagTemplate, assetsPath + "js/libs/cfi/develop/readium-cfi.umd.js")
+
+        val modifiedFileData = fileData.replace("</head>", "$jsInjection</head>")
+
+        webView.webViewClient = object : WebViewClient() {
+
+            @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+            override fun onPageFinished(view: WebView?, url: String?) {
+                Log.v(LOG_TAG, "-> onPageFinished -> ${link.href}")
+
+                var searchMethod = "javascript:getLocatorsUsingWindowFind(\"%s\")"
+                searchMethod = String.format(searchMethod, searchQuery)
+
+                webView.evaluateJavascript(searchMethod) { value: String? ->
+                    Log.v(LOG_TAG, "-> getLocatorsUsingWindowFind returned -> ${link.href}")
 
                     addLocators(value, link)
                     synchronized(this@SearchQueryHandler) {
