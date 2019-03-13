@@ -14,7 +14,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.ohze'
 project.archivesBaseName = rootProject.name
-version = "1.0.8"
+version = "1.0.8-2"
 
 android {
     flavorDimensions "testapp"
@@ -68,9 +68,10 @@ dependencies {
         devTestappImplementation project(':r2-shared')
         devTestappWithLcpImplementation project(':r2-shared')
     }
-    devFolioReaderImplementation("$group:r2-shared-kotlin:1.0.8") {
-        changing = true
-    }
+    implementation "$group:r2-shared-kotlin:1.0.8-2"
+//    devFolioReaderImplementation("$group:r2-shared-kotlin:1.0.8-2") {
+//        changing = true
+//    }
 
     //TODO conflicting support libraries, excluding these
     implementation('com.mcxiaoke.koi:core:0.5.5') {
