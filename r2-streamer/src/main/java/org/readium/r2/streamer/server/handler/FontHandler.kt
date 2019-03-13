@@ -10,7 +10,6 @@
 package org.readium.r2.streamer.server.handler
 
 
-import android.util.Log
 import android.webkit.MimeTypeMap
 import org.nanohttpd.protocols.http.IHTTPSession
 import org.nanohttpd.protocols.http.response.IStatus
@@ -19,6 +18,7 @@ import org.nanohttpd.protocols.http.response.Response.newFixedLengthResponse
 import org.nanohttpd.protocols.http.response.Status
 import org.nanohttpd.router.RouterNanoHTTPD
 import org.readium.r2.streamer.server.Fonts
+import timber.log.Timber
 import java.io.InputStream
 
 
@@ -41,7 +41,7 @@ class FontHandler : RouterNanoHTTPD.DefaultHandler() {
         val method = session!!.method
         var uri = session.uri
 
-        Log.v(TAG, "Method: $method, Uri: $uri")
+        Timber.v("Method: $method, Url: $uri")
 
         return try {
             val lastSlashIndex = uri.lastIndexOf('/')
@@ -50,7 +50,7 @@ class FontHandler : RouterNanoHTTPD.DefaultHandler() {
             val x = createResponse(Status.OK, getMimeType(uri), resources.get(uri).inputStream())
             x
         } catch (e: Exception) {
-            Log.e(TAG, "Exception in get", e)
+            Timber.e( " Exception " + e.toString())
             newFixedLengthResponse(Status.INTERNAL_ERROR, mimeType, ResponseStatus.FAILURE_RESPONSE)
         }
     }
@@ -78,7 +78,4 @@ class FontHandler : RouterNanoHTTPD.DefaultHandler() {
         return response
     }
 
-    companion object {
-        val TAG: String = FontHandler::class.java.simpleName
-    }
 }

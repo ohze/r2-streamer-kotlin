@@ -9,7 +9,6 @@
 
 package org.readium.r2.streamer.server.handler
 
-import android.util.Log
 import org.nanohttpd.protocols.http.IHTTPSession
 import org.nanohttpd.protocols.http.response.IStatus
 import org.nanohttpd.protocols.http.response.Response
@@ -18,6 +17,7 @@ import org.nanohttpd.protocols.http.response.Status
 import org.nanohttpd.router.RouterNanoHTTPD
 
 import org.readium.r2.streamer.fetcher.Fetcher
+import timber.log.Timber
 
 import java.io.IOException
 
@@ -41,13 +41,9 @@ class ManifestHandler : RouterNanoHTTPD.DefaultHandler() {
             val fetcher = uriResource!!.initParameter(Fetcher::class.java)
             newFixedLengthResponse(status, mimeType, fetcher.publication.manifest())
         } catch (e: IOException) {
-            Log.e(TAG, "Exception in get", e)
+            Timber.v(" IOException " + e.toString())
             newFixedLengthResponse(Status.INTERNAL_ERROR, mimeType, ResponseStatus.FAILURE_RESPONSE)
         }
 
-    }
-
-    companion object {
-        private val TAG: String = ManifestHandler::class.java.simpleName
     }
 }
