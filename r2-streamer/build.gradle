@@ -14,7 +14,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.ohze'
 project.archivesBaseName = rootProject.name
-version = "1.0.8-2"
+version = "1.0.8-3"
 
 android {
     flavorDimensions "testapp"

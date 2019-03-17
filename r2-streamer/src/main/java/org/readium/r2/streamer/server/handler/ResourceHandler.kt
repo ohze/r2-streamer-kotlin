@@ -45,7 +45,8 @@ class ResourceHandler : RouterNanoHTTPD.DefaultHandler() {
             val fetcher = uriResource!!.initParameter(Fetcher::class.java)
 
             val filePath = getHref(session.uri)
-            val link = fetcher.publication.linkWithHref(filePath)!!
+            val link = fetcher.publication.linkWithHref(filePath)
+                ?: return newFixedLengthResponse(Status.NOT_FOUND, "text/html", byteArrayOf())
             val mimeType = link.typeLink!!
 
             // If the content is of type html return the response this is done to
