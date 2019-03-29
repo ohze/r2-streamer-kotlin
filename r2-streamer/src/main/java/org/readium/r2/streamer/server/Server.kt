@@ -16,8 +16,8 @@ import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.fetcher.Fetcher
 import org.readium.r2.streamer.server.handler.*
+import org.readium.r2.toFile
 import java.io.File
-import java.io.InputStream
 import java.net.URL
 import java.util.*
 
@@ -109,12 +109,6 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.
                 containsMediaOverlay = true
                 link.href = link.href?.replace("port", "127.0.0.1:$listeningPort$filePath")
             }
-        }
-    }
-
-    private fun InputStream.toFile(path: String) {
-        use { input ->
-            File(path).outputStream().use { input.copyTo(it) }
         }
     }
 }

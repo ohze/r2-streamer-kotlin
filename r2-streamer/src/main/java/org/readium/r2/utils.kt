@@ -1,5 +1,7 @@
 package org.readium.r2
 
+import java.io.File
+import java.io.InputStream
 import java.io.UnsupportedEncodingException
 import java.security.MessageDigest
 
@@ -42,4 +44,10 @@ fun ByteArray.encodeHex(): CharArray {
     i++
   }
   return out
+}
+
+fun InputStream.toFile(path: String) {
+  use { input ->
+    File(path).outputStream().use { input.copyTo(it) }
+  }
 }
