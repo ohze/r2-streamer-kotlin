@@ -7,10 +7,13 @@
  * LICENSE file present in the project repository where this source code is maintained.
  */
 
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'com.github.dcendents.android-maven'
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+    id 'kotlin-android-extensions'
+//    id "name.remal.check-updates" version "1.0.121"
+    id 'com.github.dcendents.android-maven' version "2.1"
+}
 
 group='com.github.ohze'
 project.archivesBaseName = rootProject.name
@@ -58,7 +61,6 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
@@ -81,23 +83,23 @@ dependencies {
     implementation('com.mcxiaoke.koi:async:0.5.5') {
         exclude module: 'support-v4'
     }
-    implementation "androidx.appcompat:appcompat:1.1.0-alpha02"
+    implementation "androidx.appcompat:appcompat:1.1.0-alpha03"
 
     // Intend to fetch repo from jitpack.io for stable releases
-    api 'com.github.NanoHttpd.nanohttpd:nanohttpd:fd80618e93d'
-    api 'com.github.NanoHttpd.nanohttpd:nanohttpd-nanolets:fd80618e93d'
+    api 'com.github.NanoHttpd.nanohttpd:nanohttpd:b04a342a4b'
+    api 'com.github.NanoHttpd.nanohttpd:nanohttpd-nanolets:b04a342a4b'
 
     implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'commons-io:commons-io:2.4'
-    implementation 'org.zeroturnaround:zt-zip:1.12'
-    implementation 'joda-time:joda-time:2.9.9'
+    implementation 'commons-io:commons-io:2.6'
+    implementation 'org.zeroturnaround:zt-zip:1.13'
+    implementation 'joda-time:joda-time:2.10.1'
     implementation 'nl.komponents.kovenant:kovenant:3.3.0'
 
-    final JACKSON_VERSION = '2.9.7'
+    final JACKSON_VERSION = '2.9.8'
     implementation "com.fasterxml.jackson.core:jackson-core:$JACKSON_VERSION"
     implementation "com.fasterxml.jackson.core:jackson-annotations:$JACKSON_VERSION"
     implementation "com.fasterxml.jackson.core:jackson-databind:$JACKSON_VERSION"
-    implementation 'org.jsoup:jsoup:1.11.2'
+    implementation 'org.jsoup:jsoup:1.11.3'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.2-alpha02'
