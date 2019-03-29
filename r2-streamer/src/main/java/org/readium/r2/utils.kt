@@ -1,5 +1,6 @@
 package org.readium.r2
 
+import android.content.res.AssetManager
 import java.io.File
 import java.io.InputStream
 import java.io.UnsupportedEncodingException
@@ -51,3 +52,6 @@ fun InputStream.toFile(path: String) {
     File(path).outputStream().use { input.copyTo(it) }
   }
 }
+
+fun AssetManager.readText(fileName: String): String =
+    open(fileName).bufferedReader().use { it.readText() }

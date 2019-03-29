@@ -12,6 +12,7 @@ package org.readium.r2.streamer.server
 import android.content.Context
 import android.content.res.AssetManager
 import org.nanohttpd.router.RouterNanoHTTPD
+import org.readium.r2.readText
 import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.fetcher.Fetcher
@@ -34,15 +35,11 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.
         const val JS_HANDLE = "/scripts/(.*)"
         const val FONT_HANDLE = "/fonts/(.*)"
     }
-    
+
     private var containsMediaOverlay = false
 
     val resources = Ressources()
     val fonts = Fonts()
-
-    private fun addResource(name: String, body: String) {
-        resources.add(name, body)
-    }
 
     fun addFont(name: String, assets: AssetManager, context: Context) {
         val inputStream = assets.open("fonts/$name")
@@ -54,34 +51,25 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.
     }
 
     fun loadResources(assets: AssetManager, context: Context) {
-        addResource("ltr-after.css", Scanner(assets.open("ReadiumCSS/ltr/ReadiumCSS-after.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("ltr-before.css", Scanner(assets.open("ReadiumCSS/ltr/ReadiumCSS-before.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("ltr-default.css", Scanner(assets.open("ReadiumCSS/ltr/ReadiumCSS-default.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("rtl-after.css", Scanner(assets.open("ReadiumCSS/rtl/ReadiumCSS-after.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("rtl-before.css", Scanner(assets.open("ReadiumCSS/rtl/ReadiumCSS-before.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("rtl-default.css", Scanner(assets.open("ReadiumCSS/rtl/ReadiumCSS-default.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("cjkv-after.css", Scanner(assets.open("ReadiumCSS/cjk-vertical/ReadiumCSS-after.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("cjkv-before.css", Scanner(assets.open("ReadiumCSS/cjk-vertical/ReadiumCSS-before.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("cjkv-default.css", Scanner(assets.open("ReadiumCSS/cjk-vertical/ReadiumCSS-default.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("cjkh-after.css", Scanner(assets.open("ReadiumCSS/cjk-horizontal/ReadiumCSS-after.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("cjkh-before.css", Scanner(assets.open("ReadiumCSS/cjk-horizontal/ReadiumCSS-before.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("cjkh-default.css", Scanner(assets.open("ReadiumCSS/cjk-horizontal/ReadiumCSS-default.css"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("touchHandling.js", Scanner(assets.open("ReadiumCSS/touchHandling.js"), "utf-8")
-                .useDelimiter("\\A").next())
-        addResource("utils.js", Scanner(assets.open("ReadiumCSS/utils.js"), "utf-8")
-                .useDelimiter("\\A").next())
+        mapOf(
+            "ltr-after.css" to "ReadiumCSS/ltr/ReadiumCSS-after.css",
+            "ltr-before.css" to "ReadiumCSS/ltr/ReadiumCSS-before.css",
+            "ltr-default.css" to "ReadiumCSS/ltr/ReadiumCSS-default.css",
+            "rtl-after.css" to "ReadiumCSS/rtl/ReadiumCSS-after.css",
+            "rtl-before.css" to "ReadiumCSS/rtl/ReadiumCSS-before.css",
+            "rtl-default.css" to "ReadiumCSS/rtl/ReadiumCSS-default.css",
+            "cjkv-after.css" to "ReadiumCSS/cjk-vertical/ReadiumCSS-after.css",
+            "cjkv-before.css" to "ReadiumCSS/cjk-vertical/ReadiumCSS-before.css",
+            "cjkv-default.css" to "ReadiumCSS/cjk-vertical/ReadiumCSS-default.css",
+            "cjkh-after.css" to "ReadiumCSS/cjk-horizontal/ReadiumCSS-after.css",
+            "cjkh-before.css" to "ReadiumCSS/cjk-horizontal/ReadiumCSS-before.css",
+            "cjkh-default.css" to "ReadiumCSS/cjk-horizontal/ReadiumCSS-default.css",
+            "touchHandling.js" to "ReadiumCSS/touchHandling.js",
+            "utils.js" to "ReadiumCSS/utils.js"
+        ).forEach { (name: String, fileName: String) ->
+            resources.add(name, assets.readText(fileName))
+        }
+
         addFont("OpenDyslexic-Regular.otf", assets, context)
     }
 
