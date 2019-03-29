@@ -10,13 +10,12 @@
 package org.readium.r2.streamer.fetcher
 
 import android.util.Log
-import com.mcxiaoke.koi.HASH
-import com.mcxiaoke.koi.ext.toHexBytes
+import org.readium.r2.toHexBytes
+import org.readium.r2.sha1
 import org.readium.r2.shared.Publication
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import kotlin.experimental.xor
-
 
 class FontDecoder {
 
@@ -48,7 +47,7 @@ class FontDecoder {
     private fun decodingFont(input: InputStream, pubId: String, length: Int): ByteArrayInputStream {
         val publicationKey: ByteArray = when (length) {
             adobe -> getHashKeyAdobe(pubId)
-            else -> HASH.sha1(pubId).toHexBytes()
+            else -> pubId.sha1().toHexBytes()
         }
         return ByteArrayInputStream(deobfuscate(input, publicationKey, length))
     }

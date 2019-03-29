@@ -75,14 +75,6 @@ dependencies {
 //        changing = true
 //    }
 
-    //TODO conflicting support libraries, excluding these
-    implementation('com.mcxiaoke.koi:core:0.5.5') {
-        exclude module: 'support-v4'
-    }
-    // useful extensions (only ~100k)
-    implementation('com.mcxiaoke.koi:async:0.5.5') {
-        exclude module: 'support-v4'
-    }
     implementation "androidx.appcompat:appcompat:1.1.0-alpha03"
 
     // Intend to fetch repo from jitpack.io for stable releases
@@ -110,7 +102,8 @@ dependencies {
 // Builds a jar with source files
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
+    archiveClassifier.set('sources')
+//    classifier = 'sources'
 }
 
 artifacts {
