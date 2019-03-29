@@ -24,15 +24,17 @@ import java.util.*
 class Server(port: Int) : AbstractServer(port)
 
 abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.1", port) {
-
-    private val SEARCH_QUERY_HANDLE = "/search"
-    private val MANIFEST_HANDLE = "/manifest"
-    private val JSON_MANIFEST_HANDLE = "/manifest.json"
-    private val MANIFEST_ITEM_HANDLE = "/(.*)"
-    private val MEDIA_OVERLAY_HANDLE = "/media-overlay"
-    private val CSS_HANDLE = "/styles/(.*)"
-    private val JS_HANDLE = "/scripts/(.*)"
-    private val FONT_HANDLE = "/fonts/(.*)"
+    companion object {
+        const val SEARCH_HANDLE = "/search"
+        const val MANIFEST_HANDLE = "/manifest"
+        const val JSON_MANIFEST_HANDLE = "/manifest.json"
+        const val MANIFEST_ITEM_HANDLE = "/(.*)"
+        const val MEDIA_OVERLAY_HANDLE = "/media-overlay"
+        const val CSS_HANDLE = "/styles/(.*)"
+        const val JS_HANDLE = "/scripts/(.*)"
+        const val FONT_HANDLE = "/fonts/(.*)"
+    }
+    
     private var containsMediaOverlay = false
 
     val resources = Ressources()
@@ -95,7 +97,7 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.
         }
         addRoute(fileName + JSON_MANIFEST_HANDLE, ManifestHandler::class.java, fetcher)
         addRoute(fileName + MANIFEST_HANDLE, ManifestHandler::class.java, fetcher)
-        addRoute(fileName + SEARCH_QUERY_HANDLE, SearchQueryHandler::class.java, fetcher)
+        addRoute(fileName + SEARCH_HANDLE, SearchQueryHandler::class.java, fetcher)
         addRoute(fileName + MANIFEST_ITEM_HANDLE, ResourceHandler::class.java, fetcher)
         addRoute(JS_HANDLE, JSHandler::class.java, resources)
         addRoute(CSS_HANDLE, CSSHandler::class.java, resources)
