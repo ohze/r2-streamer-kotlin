@@ -35,14 +35,14 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.
     private val FONT_HANDLE = "/fonts/(.*)"
     private var containsMediaOverlay = false
 
-    private val resources = Ressources()
-    private val fonts = Fonts()
+    val resources = Ressources()
+    val fonts = Fonts()
 
     private fun addResource(name: String, body: String) {
         resources.add(name, body)
     }
 
-    private fun addFont(name: String, assets: AssetManager, context: Context) {
+    fun addFont(name: String, assets: AssetManager, context: Context) {
         val inputStream = assets.open("fonts/$name")
         val dir = File(context.getExternalFilesDir(null).path + "/fonts/")
         dir.mkdirs()
