@@ -36,40 +36,22 @@ class FontHandler : RouterNanoHTTPD.DefaultHandler() {
         return Status.OK
     }
 
-    override fun get(uriResource: RouterNanoHTTPD.UriResource?, urlParams: Map<String, String>?, session: IHTTPSession?): Response {
-
-        val method = session!!.method
-        var uri = session.uri
-
-        Timber.v("Method: $method, Url: $uri")
-
+    override fun get(uriResource: RouterNanoHTTPD.UriResource?, urlParams: Map<String, String>?, session: IHTTPSession): Response {
+        Timber.v("%s: %s", session.method, session.uri)
         return try {
-            val lastSlashIndex = uri.lastIndexOf('/')
-            uri = uri.substring(lastSlashIndex + 1, uri.length)
+            val uri = session.uri.substringAfterLast('/')
             val resources = uriResource!!.initParameter(Fonts::class.java)
-            val x = createResponse(Status.OK, getMimeType(uri), resources.get(uri).inputStream())
-            x
+            createResponse(Status.OK, getMimeType(uri), resources.get(uri).inputStream())
         } catch (e: Exception) {
-            Timber.e( " Exception " + e.toString())
+            Timber.e(e)
             newFixedLengthResponse(Status.INTERNAL_ERROR, mimeType, ResponseStatus.FAILURE_RESPONSE)
         }
     }
 
-    private fun getMimeType(url: String): String {
-        val extension = MimeTypeMap.getFileExtensionFromUrl(url)
-        var mimeType = "application/vnd.ms-opentype"
-        if (extension != null) {
-            try {
-                mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-            } catch (e: Exception) {
-                when (extension) {
-                    ".otf" -> mimeType = "application/vnd.ms-opentype"
-                    ".ttf" -> mimeType = "application/vnd.ms-truetype"
-                // TODO handle other font types
-                }
-            }
-        }
-        return mimeType
+    private fun getMimeType(url: String) = when(MimeTypeMap.getFileExtensionFromUrl(url)) {
+        "woff" -> "application/font-woff"
+        "otf" -> "application/vnd.ms-opentype"
+        else -> "application/vnd.ms-opentype"
     }
 
     private fun createResponse(status: Status, mimeType: String, message: InputStream): Response {
