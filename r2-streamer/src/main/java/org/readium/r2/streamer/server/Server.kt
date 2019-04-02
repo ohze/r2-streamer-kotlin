@@ -20,7 +20,6 @@ import org.readium.r2.streamer.server.handler.*
 import org.readium.r2.toFile
 import java.io.File
 import java.net.URL
-import java.util.*
 
 class Server(port: Int) : AbstractServer(port)
 
@@ -42,12 +41,13 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.
     val fonts = Fonts()
 
     fun addFont(name: String, assets: AssetManager, context: Context) {
-        val inputStream = assets.open("fonts/$name")
-        val dir = File(context.getExternalFilesDir(null).path + "/fonts/")
-        dir.mkdirs()
-        inputStream.toFile(context.getExternalFilesDir(null).path + "/fonts/" + name)
-        val file = File(context.getExternalFilesDir(null).path + "/fonts/" + name)
-        fonts.add(name, file)
+        val d = context.getExternalFilesDir(null).path + "/fonts/"
+        val f = File("$d/$name")
+        if (f.exists())
+            return
+        File(d).mkdirs()
+        assets.open("fonts/$name").toFile(f)
+        fonts.add(name, f)
     }
 
     fun loadResources(assets: AssetManager, context: Context) {

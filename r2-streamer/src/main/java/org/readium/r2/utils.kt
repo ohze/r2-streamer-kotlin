@@ -47,9 +47,10 @@ fun ByteArray.encodeHex(): CharArray {
   return out
 }
 
-fun InputStream.toFile(path: String) {
+fun InputStream.toFile(path: String) { toFile(File(path)) }
+fun InputStream.toFile(f: File) {
   use { input ->
-    File(path).outputStream().use { input.copyTo(it) }
+    f.outputStream().use { input.copyTo(it) }
   }
 }
 
