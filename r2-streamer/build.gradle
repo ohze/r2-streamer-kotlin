@@ -17,7 +17,7 @@ plugins {
 
 group='com.github.ohze'
 project.archivesBaseName = rootProject.name
-version = "1.0.8-4"
+version = "1.1.0"
 
 android {
     flavorDimensions "testapp"
