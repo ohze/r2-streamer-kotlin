@@ -39,12 +39,14 @@ class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilte
             var decodedInputStream = drmDecoder.decoding(input, resourceLink, container.drm)
             decodedInputStream = fontDecoder.decoding(decodedInputStream, publication, path)
             if ((resourceLink.typeLink == "application/xhtml+xml" || resourceLink.typeLink == "text/html")) {
-                decodedInputStream = if (publication.metadata.rendition.layout == RenditionLayout.Reflowable && resourceLink.properties.layout == null
-                        || resourceLink.properties.layout == "reflowable") {
-                    injectReflowableHtml(decodedInputStream, publication)
-                } else {
-                    injectFixedLayoutHtml(decodedInputStream)
-                }
+                decodedInputStream =
+                    if (publication.metadata.rendition.layout == RenditionLayout.Reflowable
+                        && (resourceLink.properties.layout == null
+                            || resourceLink.properties.layout == "reflowable")) {
+                        injectReflowableHtml(decodedInputStream, publication)
+                    } else {
+                        injectFixedLayoutHtml(decodedInputStream)
+                    }
             }
 
             return decodedInputStream
@@ -62,12 +64,13 @@ class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilte
             if ((resourceLink.typeLink == "application/xhtml+xml" || resourceLink.typeLink == "text/html")
                     && baseUrl != null) {
                 decodedInputStream =
-                        if (publication.metadata.rendition.layout == RenditionLayout.Reflowable && (resourceLink.properties.layout == null
-                                        || resourceLink.properties.layout == "reflowable")) {
-                            injectReflowableHtml(decodedInputStream, publication)
-                        } else {
-                            injectFixedLayoutHtml(decodedInputStream)
-                        }
+                    if (publication.metadata.rendition.layout == RenditionLayout.Reflowable
+                        && (resourceLink.properties.layout == null
+                            || resourceLink.properties.layout == "reflowable")) {
+                        injectReflowableHtml(decodedInputStream, publication)
+                    } else {
+                        injectFixedLayoutHtml(decodedInputStream)
+                    }
             }
             return decodedInputStream.readBytes()
         } ?: run {
