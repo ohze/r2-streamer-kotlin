@@ -9,31 +9,17 @@
 
 package org.readium.r2.streamer.container
 
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.net.URI
 
 interface DirectoryContainer : Container {
-
     override fun data(relativePath: String): ByteArray {
-
         val decodedFilePath = rootFile.rootPath + "/" + getDecodedRelativePath(relativePath)
         val file = File(decodedFilePath)
-
         if (!file.exists())
             throw Exception("Missing File")
-
-        val outputStream = ByteArrayOutputStream()
-        var readLength = 0
-        val buffer = ByteArray(16384)
-        val inputStream = FileInputStream(file)
-
-        while (inputStream.read(buffer).let { readLength = it; it != -1 })
-            outputStream.write(buffer, 0, readLength)
-
-        inputStream.close()
-        return outputStream.toByteArray()
+        return  file.readBytes()
     }
 
     override fun dataLength(relativePath: String) =
