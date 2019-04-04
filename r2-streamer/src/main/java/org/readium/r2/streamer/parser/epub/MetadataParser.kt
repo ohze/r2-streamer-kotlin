@@ -85,7 +85,8 @@ class MetadataParser {
         return identifiers[0].text
     }
 
-    fun modifiedDate(metadataElement: Node) = metadataElement.get("meta")!!.firstOrNull {
+    fun modifiedDate(metadataElement: Node): String? = metadataElement.children.firstOrNull {
+        it.name == "meta" &&
         it.attributes["property"] == "dcterms:modified"
     }?.text
 
@@ -101,12 +102,13 @@ class MetadataParser {
     }
 
     fun parseContributors(metadataElement: Node, metadata: Metadata, epubVersion: Double) {
-        var allContributors: MutableList<Node> = mutableListOf()
-        allContributors = allContributors.plus(findContributorsXmlElements(metadataElement)).toMutableList()
-        if (epubVersion == 3.0)
-            allContributors = allContributors.plus(findContributorsMetaXmlElements(metadataElement)).toMutableList()
-        for (contributor in allContributors) {
-            parseContributor(contributor, metadataElement, metadata)
+        val allContributors = mutableListOf<Node>().apply {
+            addAll(findContributorsXmlElements(metadataElement))
+            if (epubVersion == 3.0)
+                addAll(findContributorsMetaXmlElements(metadataElement))
+        }
+        allContributors.forEach {
+            parseContributor(it, metadataElement, metadata)
         }
     }
 
@@ -115,9 +117,13 @@ class MetadataParser {
 
         val eid = element.attributes["id"]
         if (eid != null) {
-            for (meta in metadataElement.get("meta")!!
-                    .filter { it.attributes["refines"] == eid && it.attributes["property"] == "role" }) {
-                meta.text?.let { contributor.roles.add(it) }
+            for (it in metadataElement.children) {
+                if (it.name != "meta" ||
+                    it.attributes["refines"] != eid ||
+                    it.attributes["property"] != "role"
+                ) continue
+
+                it.text?.let { text -> contributor.roles.add(text) }
             }
         }
 
@@ -172,23 +178,21 @@ class MetadataParser {
         return ret
     }
 
-    // Return the XML element corresponding to the main title (title having
-    // `<meta refines="#.." property="title-type" id="title-type">main</meta>`
-    // - Parameters:
-    //   - titles: The titles XML elements array.
-    //   - metadata: The Publication Metadata XML object.
-    // - Returns: The main title XML element.
+    /** Return the XML element corresponding to the main title (title having
+     * `<meta refines="#.." property="title-type" id="title-type">main</meta>`
+     * @param titles: The titles XML elements array.
+     * @param metadata: The Publication Metadata XML object.
+     * @return The main title XML element. */
     private fun getMainTitleElement(titles: List<Node>, metadata: Node): Node? {
-        val possibleTitles = titles.filter { it.attributes["id"] != null }
-        if (possibleTitles.isEmpty())
-            return null
-        for (title in possibleTitles) {
-            for (meta in metadata.get("meta")!!.filter {
-                it.attributes["refines"] == "#${title.attributes["id"]}"
-                        && it.attributes["property"] == "title-type"
-                        && it.text == "main"
-            }) {
-                return meta
+        for (title in titles) {
+            if (title.attributes["id"] == null)
+                continue
+            for (meta in metadata.children) {
+                if (meta.name == "meta"
+                    && meta.attributes["refines"] == "#${title.attributes["id"]}"
+                    && meta.attributes["property"] == "title-type"
+                    && meta.text == "main"
+                ) return meta
             }
         }
         return null
@@ -218,29 +222,29 @@ class MetadataParser {
         }
     }
 
-    // Return an array of lang:string, defining the multiple representations of
-    // a string in different languages.
-    // - Parameters:
-    // - element: The element to parse (can be a title or a contributor).
-    // - metadata: The metadata XML element.
+    /** Return an array of lang:string, defining the multiple representations of
+     * a string in different languages.
+     * @param element: The element to parse (can be a title or a contributor).
+     * @param metadata: The metadata XML element. */
     private fun multiString(element: Node, metadata: Node): Map<String, String> {
         val multiString: MutableMap<String, String> = mutableMapOf()
 
         val elementId = element.attributes["id"] ?: return multiString
-        val altScriptMetas = metadata.get("meta")!!.filter {
-            it.attributes["refines"] == "#$elementId"
-                    && it.attributes["property"] == "alternate-script"
-        }
-        if (altScriptMetas.isEmpty())
-            return multiString
-        for (altScriptMeta in altScriptMetas) {
-            val title = altScriptMeta.text
-            val lang = altScriptMeta.attributes["xml:lang"]
+
+        for(it in metadata.children) {
+            if (it.name != "meta")
+                continue
+            if (it.attributes["refines"] != "#$elementId"
+                || it.attributes["property"] != "alternate-script")
+                continue
+            // `it` is now an altScriptMeta
+            val title = it.text
+            val lang = it.attributes["xml:lang"]
             if (title != null && lang != null)
                 multiString[lang] = title
         }
-        if (!multiString.isEmpty()) {
-            val publicationDefaultLanguage = metadata.get("dc:language")?.first()?.text
+        if (multiString.isNotEmpty()) {
+            val publicationDefaultLanguage = metadata.getFirst("dc:language")?.text
                     ?: throw Exception("No language")
             val lang = element.attributes["xml:lang"] ?: publicationDefaultLanguage
             val value = element.text ?: ""
@@ -248,5 +252,4 @@ class MetadataParser {
         }
         return multiString
     }
-
 }
