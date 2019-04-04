@@ -12,10 +12,9 @@ package org.readium.r2.streamer.parser.epub
 import org.readium.r2.shared.*
 import org.readium.r2.shared.parser.xml.Node
 
-const val noTitleError = "Error : Publication has no title"
+//const val noTitleError = "Error : Publication has no title"
 
 class MetadataParser {
-
     fun parseRenditionProperties(metadataElement: Node, metadata: Metadata) {
         val metas = metadataElement.get("meta")!!
         if (metas.isEmpty()) {
@@ -45,48 +44,43 @@ class MetadataParser {
         }
     }
 
-    // Parse and return the main title informations of the publication the from
-    // the OPF XML document `<metadata>` element.
-    // In the simplest cases it just return the value of the <dc:title> XML
-    // element, but sometimes there are alternative titles (titles in others
-    // languages).
-    // See `MultilanguageString` for complementary informations.
-    //
-    // - Parameter metadata: The `<metadata>` element.
-    // - Returns: The content of the `<dc:title>` element, `nil` if the element
-    //            wasn't found.
+    /** Parse and return the main title informations of the publication the from
+     * the OPF XML document `<metadata>` element.
+     * In the simplest cases it just return the value of the <dc:title> XML
+     * element, but sometimes there are alternative titles (titles in others
+     * languages).
+     * See `MultilanguageString` for complementary informations.
+     *
+     * @param metadata: The `<metadata>` element.
+     * @return: The content of the `<dc:title>` element, `null` if the element wasn't found */
     fun mainTitle(metadata: Node): MultilanguageString? {
-        val titles = metadata.children.filter { node -> node.name == "dc:title" }
+        val titles = metadata.children.filter { it.name == "dc:title" }
         if (titles.isEmpty())
-            throw Exception(noTitleError)
+            return null //throw Exception(noTitleError)
         val multilanguageTitle = MultilanguageString()
 
-        multilanguageTitle.singleString = try {
-            metadata.get("dc:title")?.first()?.text ?: throw Exception("No title")
-        } catch (e: Exception) {
-            throw Exception(noTitleError)
-        }
+        multilanguageTitle.singleString =
+            metadata.getFirst("dc:title")?.text
+                ?: return null //throw Exception(noTitleError)
+
         val mainTitle = getMainTitleElement(titles, metadata) ?: return multilanguageTitle
         multilanguageTitle.multiString = multiString(mainTitle, metadata).toMutableMap()
         return multilanguageTitle
     }
 
-    // Parse and return the Epub unique identifier.
-    //
-    // - Parameters:
-    //   - metadata: The metadata XML element.
-    //   - Attributes: The XML document attributes.
-    // - Returns: The content of the `<dc:identifier>` element, `nil` if the
-    //            element wasn't found.
+    /** Parse and return the Epub unique identifier.
+     *
+     * @param metadata: The metadata XML element.
+     * @return The content of the `<dc:identifier>` element, `null` if the element wasn't found */
     fun uniqueIdentifier(metadata: Node, documentProperties: Map<String, String>): String? {
-        val identifiers = metadata.get("dc:identifier") ?: throw Exception("No identifier")
-        if (identifiers.isEmpty())
+        val identifiers = metadata.get("dc:identifier") //?: throw Exception("No identifier")
+        if (identifiers.isNullOrEmpty())
             return null
         val uniqueId = documentProperties["unique-identifier"]
         if (identifiers.size > 1 && uniqueId != null) {
-            val uniqueIdentifiers = identifiers.filter { it.attributes["id"] == uniqueId }
-            if (!uniqueIdentifiers.isEmpty())
-                return uniqueIdentifiers.firstOrNull()?.text ?: throw Exception("No identifier")
+            val uniqueIdentifier = identifiers.firstOrNull { it.attributes["id"] == uniqueId }
+            if (uniqueIdentifier != null) //?: throw Exception("No identifier")
+                return uniqueIdentifier.text
         }
         return identifiers[0].text
     }
