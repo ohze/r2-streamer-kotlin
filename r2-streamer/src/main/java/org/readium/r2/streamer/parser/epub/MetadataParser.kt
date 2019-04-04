@@ -195,18 +195,28 @@ class MetadataParser {
     }
 
     private fun findContributorsXmlElements(metadata: Node): List<Node> {
-        val allContributors: MutableList<Node> = mutableListOf()
-
-        metadata.get("dc:publisher")?.let { allContributors.plusAssign(it.toMutableList()) }
-        metadata.get("dc:creator")?.let { allContributors.plusAssign(it.toMutableList()) }
-        metadata.get("dc:contributor")?.let { allContributors.plusAssign(it.toMutableList()) }
-        return allContributors
+        return metadata.children.filter {
+            it.name == "dc:publisher" ||
+            it.name == "dc:creator" ||
+            it.name == "dc:contributor"
+        }
+//        val allContributors: MutableList<Node> = mutableListOf()
+//        metadata.children.filterTo(allContributors){ it.name == "dc:publisher" }
+//        metadata.children.filterTo(allContributors){ it.name == "dc:creator" }
+//        metadata.children.filterTo(allContributors){ it.name == "dc:contributor" }
+//        return allContributors
     }
 
-    private fun findContributorsMetaXmlElements(metadata: Node) =
-            metadata.get("meta")!!.filter { it.attributes["property"] == "dcterms:publisher" }.toMutableList()
-                    .plus(metadata.get("meta")!!.filter { it.attributes["property"] == "dcterms:creator" }).toMutableList()
-                    .plus(metadata.get("meta")!!.filter { it.attributes["property"] == "dcterms:contributor" }).toMutableList()
+    private fun findContributorsMetaXmlElements(metadata: Node): MutableList<Node> {
+        return metadata.children.filterTo(ArrayList()) {
+            it.name == "meta" &&
+                it.attributes["property"].let { p ->
+                    p == "dcterms:publisher" ||
+                    p == "dcterms:creator" ||
+                    p == "dcterms:contributor"
+                }
+        }
+    }
 
     // Return an array of lang:string, defining the multiple representations of
     // a string in different languages.
