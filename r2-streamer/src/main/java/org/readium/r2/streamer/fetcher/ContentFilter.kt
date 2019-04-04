@@ -36,7 +36,6 @@ class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilte
 
     override fun apply(input: InputStream, publication: Publication, container: Container, path: String): InputStream {
         publication.linkWithHref(path)?.let { resourceLink ->
-
             var decodedInputStream = drmDecoder.decoding(input, resourceLink, container.drm)
             decodedInputStream = fontDecoder.decoding(decodedInputStream, publication, path)
             if ((resourceLink.typeLink == "application/xhtml+xml" || resourceLink.typeLink == "text/html")) {
@@ -52,7 +51,6 @@ class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilte
         } ?: run {
             return input
         }
-
     }
 
     override fun apply(input: ByteArray, publication: Publication, container: Container, path: String): ByteArray {
@@ -149,22 +147,19 @@ class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilte
     }
 
     private fun getHtmlFont(resourceName: String): String {
-        val prefix = "<style type=\"text/css\"> @font-face{font-family: \"OpenDyslexic\"; src:url(\""
-        val suffix = "\") format('truetype');}</style>\n"
-        return prefix + resourceName + suffix
+        return """<style type="text/css">@font-face{
+          |     font-family: "OpenDyslexic";
+          |     src:url("$resourceName") format('truetype');
+          | }</style>
+          |""".trimMargin()
     }
 
     private fun getHtmlLink(resourceName: String): String {
-        val prefix = "<link rel=\"stylesheet\" type=\"text/css\" href=\""
-        val suffix = "\"/>\n"
-        return prefix + resourceName + suffix
+        return "<link rel=\"stylesheet\" type=\"text/css\" href=\"$resourceName\"/>\n"
     }
 
     private fun getHtmlScript(resourceName: String): String {
-        val prefix = "<script type=\"text/javascript\" src=\""
-        val suffix = "\"></script>\n"
-
-        return prefix + resourceName + suffix
+        return "<script type=\"text/javascript\" src=\"$resourceName\"></script>\n"
     }
 
     private fun getProperties(preset: MutableMap<ReadiumCSSName, Boolean>): MutableMap<String, String>? {
