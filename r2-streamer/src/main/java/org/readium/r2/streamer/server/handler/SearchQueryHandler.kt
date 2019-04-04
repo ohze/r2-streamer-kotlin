@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.json.JSONArray
 import org.nanohttpd.protocols.http.IHTTPSession
-import org.nanohttpd.protocols.http.response.IStatus
 import org.nanohttpd.protocols.http.response.Response
 import org.nanohttpd.protocols.http.response.Status
 import org.nanohttpd.router.RouterNanoHTTPD
@@ -29,20 +28,14 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         val LOG_TAG: String = SearchQueryHandler::class.java.simpleName
     }
 
-    private val searchLocators: MutableList<Locator> = mutableListOf()
+    private val searchLocators = mutableListOf<Locator>()
     private lateinit var webView: WebView
 
-    override fun getStatus(): IStatus {
-        return Status.OK
-    }
+    override fun getStatus() = Status.OK
 
-    override fun getMimeType(): String {
-        return "application/json"
-    }
+    override fun getMimeType() = "application/json"
 
-    override fun getText(): String {
-        return ResponseStatus.FAILURE_RESPONSE
-    }
+    override fun getText() = ResponseStatus.FAILURE_RESPONSE
 
     override fun get(uriResource: RouterNanoHTTPD.UriResource,
                      urlParams: MutableMap<String, String>?, session: IHTTPSession): Response {

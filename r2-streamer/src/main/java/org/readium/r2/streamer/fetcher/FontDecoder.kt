@@ -18,7 +18,6 @@ import java.io.InputStream
 import kotlin.experimental.xor
 
 class FontDecoder {
-
     private val adobe = 1024
     private val idpf = 1040
 
@@ -29,7 +28,6 @@ class FontDecoder {
             "http://www.idpf.org/2008/embedding" to idpf,
             "http://ns.adobe.com/pdf/enc#RC" to adobe
     )
-
 
     fun decoding(input: InputStream, publication: Publication, path: String): InputStream {
         val publicationIdentifier = publication.metadata.identifier

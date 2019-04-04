@@ -13,18 +13,17 @@ import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import java.io.InputStream
 
-class Fetcher(var publication: Publication, var container: Container, private val userPropertiesPath: String?) {
-    private var rootFileDirectory: String
-    private var contentFilters: ContentFilters?
+class Fetcher(val publication: Publication, val container: Container, private val userPropertiesPath: String?) {
+    private val rootFileDirectory: String
+    private val contentFilters: ContentFilters
 
     init {
         val rootFilePath = publication.internalData["rootfile"]
                 ?: throw Exception("Missing root file")
-        if (rootFilePath.isNotEmpty() && rootFilePath.contains('/')) {
-            rootFileDirectory = rootFilePath.replaceAfterLast("/", "", rootFilePath)
-            rootFileDirectory = rootFileDirectory.dropLast(1)
+        rootFileDirectory = if (rootFilePath.contains('/')) {
+            rootFilePath.replaceAfterLast("/", "", rootFilePath).dropLast(1)
         } else {
-            rootFileDirectory = ""
+            ""
         }
         contentFilters = getContentFilters(container.rootFile.mimetype)
     }

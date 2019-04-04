@@ -14,10 +14,7 @@ import org.readium.r2.shared.parser.xml.XmlParser
 import org.readium.r2.shared.parser.xml.Node
 import org.readium.r2.streamer.parser.normalize
 
-class NCXParser {
-
-    lateinit var ncxDocumentPath: String
-
+class NCXParser(private val ncxDocumentPath: String) {
     fun tableOfContents(document: XmlParser): List<Link> {
         val navMapElement = document.root().getFirst("navMap")
         return nodeArray(navMapElement, "navPoint")
@@ -30,13 +27,14 @@ class NCXParser {
 
     private fun nodeArray(element: Node?, type: String): List<Link> {
         // The "to be returned" node array.
-        val newNodeArray: MutableList<Link> = mutableListOf()
+        val newNodeArray = mutableListOf<Link>()
 
         // Find the elements of `type` in the XML element.
-        val elements = element?.get(type) ?: return emptyList()
+        val elements = element?.get(type) ?: return newNodeArray
         // For each element create a new node of type `type`.
-        for (newNode in elements.map { node(it, type) })
-            newNodeArray.plusAssign(newNode)
+        elements.forEach {
+            newNodeArray.add(node(it, type))
+        }
         return newNodeArray
     }
 
@@ -46,10 +44,9 @@ class NCXParser {
         newNode.title = element.getFirst("navLabel")!!.getFirst("text")!!.text
         element.get("navPoint")?.let {
             for (childNode in it) {
-                newNode.children.plusAssign(node(childNode, type))
+                newNode.children.add(node(childNode, type))
             }
         }
         return newNode
     }
-
 }

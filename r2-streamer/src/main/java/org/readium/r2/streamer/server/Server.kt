@@ -23,7 +23,7 @@ import java.net.URL
 
 class Server(port: Int) : AbstractServer(port)
 
-abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.1", port) {
+abstract class AbstractServer(port: Int) : RouterNanoHTTPD("127.0.0.1", port) {
     companion object {
         const val SEARCH_HANDLE = "/search"
         const val MANIFEST_HANDLE = "/manifest"
@@ -78,13 +78,13 @@ abstract class AbstractServer(private var port: Int) : RouterNanoHTTPD("127.0.0.
 
         addLinks(publication, fileName)
 
-        publication.addSelfLink(fileName, URL("$BASE_URL:$port"))
+        publication.addSelfLink(fileName, URL("$BASE_URL:$myPort"))
 
         if (containsMediaOverlay) {
-            addRoute(fileName + MEDIA_OVERLAY_HANDLE, MediaOverlayHandler::class.java, fetcher)
+            addRoute(fileName + MEDIA_OVERLAY_HANDLE, MediaOverlayHandler::class.java, publication)
         }
-        addRoute(fileName + JSON_MANIFEST_HANDLE, ManifestHandler::class.java, fetcher)
-        addRoute(fileName + MANIFEST_HANDLE, ManifestHandler::class.java, fetcher)
+        addRoute(fileName + JSON_MANIFEST_HANDLE, ManifestHandler::class.java, publication)
+        addRoute(fileName + MANIFEST_HANDLE, ManifestHandler::class.java, publication)
         addRoute(fileName + SEARCH_HANDLE, SearchQueryHandler::class.java, fetcher)
         addRoute(fileName + MANIFEST_ITEM_HANDLE, ResourceHandler::class.java, fetcher)
         addRoute(JS_HANDLE, JSHandler::class.java, resources)

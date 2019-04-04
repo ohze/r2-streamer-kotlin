@@ -12,48 +12,37 @@ package org.readium.r2.streamer.server.handler
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.nanohttpd.protocols.http.IHTTPSession
-import org.nanohttpd.protocols.http.response.IStatus
 import org.nanohttpd.protocols.http.response.Response
 import org.nanohttpd.protocols.http.response.Response.newFixedLengthResponse
 import org.nanohttpd.protocols.http.response.Status
 import org.nanohttpd.router.RouterNanoHTTPD
 import org.readium.r2.shared.Link
 import org.readium.r2.shared.MediaOverlays
-import org.readium.r2.streamer.fetcher.Fetcher
-
+import org.readium.r2.shared.Publication
 
 class MediaOverlayHandler : RouterNanoHTTPD.DefaultHandler() {
 
-    override fun getText(): String {
-        return ResponseStatus.FAILURE_RESPONSE
-    }
+    override fun getText() = ResponseStatus.FAILURE_RESPONSE
 
-    override fun getMimeType(): String {
-        return "application/webpub+json"
-    }
+    override fun getMimeType() = "application/webpub+json"
 
-    override fun getStatus(): IStatus {
-        return Status.OK
-    }
+    override fun getStatus() = Status.OK
 
-    override fun get(uriResource: RouterNanoHTTPD.UriResource?, urlParams: Map<String, String>?, session: IHTTPSession?): Response {
-        val fetcher = uriResource!!.initParameter(Fetcher::class.java)
+    override fun get(uriResource: RouterNanoHTTPD.UriResource, urlParams: Map<String, String>?, session: IHTTPSession): Response {
+        val searchQueryPath = session.parameters["resource"]?.get(0)
+            ?: return failed()
 
-        return if (session!!.parameters.containsKey("resource")) {
-            val searchQueryPath = session.parameters["resource"]!![0]
-            val spines = fetcher.publication.resources
-            val objectMapper = ObjectMapper()
-            return try {
-                val json = objectMapper.writeValueAsString(getMediaOverlay(spines, searchQueryPath))
-                newFixedLengthResponse(status, mimeType, json)
-            } catch (e: JsonProcessingException) {
-                newFixedLengthResponse(status, mimeType, ResponseStatus.FAILURE_RESPONSE)
-            }
-
-        } else {
-            newFixedLengthResponse(status, mimeType, ResponseStatus.FAILURE_RESPONSE)
+        val spines = uriResource.initParameter(Publication::class.java).resources
+        val objectMapper = ObjectMapper()
+        return try {
+            val json = objectMapper.writeValueAsString(getMediaOverlay(spines, searchQueryPath))
+            newFixedLengthResponse(status, mimeType, json)
+        } catch (e: JsonProcessingException) {
+            failed()
         }
     }
+
+    private fun failed() = newFixedLengthResponse(status, mimeType, ResponseStatus.FAILURE_RESPONSE)
 
     private fun getMediaOverlay(spines: List<Link>, searchQueryPath: String): MediaOverlays? {
         for (link in spines) {
@@ -63,5 +52,4 @@ class MediaOverlayHandler : RouterNanoHTTPD.DefaultHandler() {
         }
         return MediaOverlays()
     }
-
 }

@@ -16,10 +16,9 @@ import org.readium.r2.shared.parser.xml.XmlParser
 import org.readium.r2.streamer.parser.lcplFilePath
 import java.io.File
 
-class ContainerEpubDirectory : EpubContainer, DirectoryContainer {
-
-    override var successCreated: Boolean = false
-    override var rootFile: RootFile
+class ContainerEpubDirectory(path: String) : EpubContainer, DirectoryContainer {
+    override val successCreated: Boolean = File(path).exists()
+    override val rootFile = RootFile(rootPath = path, version = null)
     override var drm: Drm? = null
 
     override fun xmlDocumentForFile(relativePath: String): XmlParser {
@@ -44,14 +43,8 @@ class ContainerEpubDirectory : EpubContainer, DirectoryContainer {
         return xmlDocumentForFile(pathFile)
     }
 
-    constructor(path: String) {
-        if (File(path).exists())
-            successCreated = true
-        rootFile = RootFile(rootPath = path, version = null)
-    }
 
     override fun scanForDrm(): Drm? {
-
         if (File(rootFile.rootPath + "/" + lcplFilePath).exists()) {
             return Drm(Drm.Brand.Lcp)
         }

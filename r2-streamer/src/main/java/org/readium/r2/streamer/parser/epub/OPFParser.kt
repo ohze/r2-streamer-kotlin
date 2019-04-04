@@ -16,18 +16,14 @@ import org.readium.r2.shared.parser.xml.Node
 import org.readium.r2.shared.parser.xml.XmlParser
 import org.readium.r2.streamer.parser.normalize
 
-class OPFParser {
+class OPFParser(private val rootFilePath: String) {
+//    val smilp = SMILParser()
 
-    val smilp = SMILParser()
-    private var rootFilePath: String? = null
-
-    fun parseOpf(document: XmlParser, filePath: String, epubVersion: Double): Publication? {
+    fun parseOpf(document: XmlParser, epubVersion: Double): Publication? {
         val publication = Publication()
-
-        rootFilePath = filePath
         publication.version = epubVersion
         publication.internalData["type"] = "epub"
-        publication.internalData["rootfile"] = rootFilePath!!
+        publication.internalData["rootfile"] = rootFilePath
         if (!parseMetadata(document, publication))
             return null
         parseResources(document.getFirst("package")!!.getFirst("manifest")!!, publication)
@@ -181,7 +177,7 @@ class OPFParser {
         val link = Link()
 
         link.title = item.attributes["id"]
-        link.href = normalize(rootFilePath!!, item.attributes["href"])
+        link.href = normalize(rootFilePath, item.attributes["href"])
         link.typeLink = item.attributes["media-type"]
         item.attributes["properties"]?.let {
             val properties = it.split("\\s+")
@@ -194,5 +190,4 @@ class OPFParser {
         }
         return link
     }
-
 }

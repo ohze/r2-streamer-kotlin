@@ -21,15 +21,13 @@ import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
-class NavigationDocumentParser {
-
-    var navigationDocumentPath: String = ""
-
+class NavigationDocumentParser(private val navigationDocumentPath: String) {
     fun tableOfContent(xml: ByteArray) : MutableList<Link> {
         val tableOfContents = mutableListOf<Link>()
         val document = xml.inputStream()
 
-        val xpath = "/xhtml:html/xhtml:body/xhtml:nav[@epub:type='toc']//xhtml:a" + "|/xhtml:html/xhtml:body/xhtml:nav[@epub:type='toc']//xhtml:span"
+        val xpath = "/xhtml:html/xhtml:body/xhtml:nav[@epub:type='toc']//xhtml:a" +
+                   "|/xhtml:html/xhtml:body/xhtml:nav[@epub:type='toc']//xhtml:span"
         val nodes = evaluateXpath(xpath, document)
 
         for (i in 0 until nodes.length) {
@@ -104,20 +102,15 @@ class NavigationDocumentParser {
 
 class NameSpaceResolver : NamespaceContext {
     override fun getNamespaceURI(p0: String?): String {
-        when (p0) {
+        return when (p0) {
             null -> throw IllegalArgumentException("No prefix provided!")
-            "epub" -> return "http://www.idpf.org/2007/ops"
-            "xhtml" -> return "http://www.w3.org/1999/xhtml"
-            else -> return XMLConstants.DEFAULT_NS_PREFIX
+            "epub" -> "http://www.idpf.org/2007/ops"
+            "xhtml" -> "http://www.w3.org/1999/xhtml"
+            else -> XMLConstants.DEFAULT_NS_PREFIX
         }
     }
 
-    override fun getPrefix(p0: String?): String? {
-        return null
-    }
+    override fun getPrefix(p0: String?): String? = null
 
-    override fun getPrefixes(p0: String?): MutableIterator<Any?>? {
-        return null
-    }
+    override fun getPrefixes(p0: String?): MutableIterator<Any?>? = null
 }
-

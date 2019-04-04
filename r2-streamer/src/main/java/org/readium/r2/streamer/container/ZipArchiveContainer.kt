@@ -22,9 +22,8 @@ import java.util.zip.ZipFile
  * the content or an inputStream of the archive
  *
  */
-
 interface ZipArchiveContainer : Container {
-    var zipFile: ZipFile
+    val zipFile: ZipFile
 
     override fun data(relativePath: String): ByteArray {
 
@@ -50,7 +49,6 @@ interface ZipArchiveContainer : Container {
     }
 
     fun getEntry(relativePath: String): ZipEntry? {
-
         val path: String = try {
             URI(relativePath).path
         } catch (e: Exception) {

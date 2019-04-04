@@ -18,45 +18,25 @@ import org.nanohttpd.router.RouterNanoHTTPD
 import org.readium.r2.streamer.server.Ressources
 import timber.log.Timber
 
-
 class JSHandler : RouterNanoHTTPD.DefaultHandler() {
+    override fun getMimeType(): String? = null
 
+    override fun getText() = ResponseStatus.FAILURE_RESPONSE
 
-    override fun getMimeType(): String? {
-        return null
-    }
+    override fun getStatus() = Status.OK
 
-    override fun getText(): String {
-        return ResponseStatus.FAILURE_RESPONSE
-    }
-
-    override fun getStatus(): IStatus {
-        return Status.OK
-    }
-
-    override fun get(uriResource: RouterNanoHTTPD.UriResource?, urlParams: Map<String, String>?, session: IHTTPSession?): Response {
-
-        val method = session!!.method
-        var uri = session.uri
-
-        Timber.v("Method: $method, Url: $uri")
+    override fun get(uriResource: RouterNanoHTTPD.UriResource?, urlParams: Map<String, String>?, session: IHTTPSession): Response {
+        Timber.v("%s: %s", session.method, session.uri)
 
         return try {
-            val lastSlashIndex = uri.lastIndexOf('/')
-            uri = uri.substring(lastSlashIndex + 1, uri.length)
+            val uri = session.uri.substringAfterLast('/')
             val resources = uriResource!!.initParameter(Ressources::class.java)
-            val x = createResponse(Status.OK, "text/javascript", resources.get(uri))
-            x
+            newFixedLengthResponse(Status.OK, "text/javascript", resources.get(uri)).apply {
+                addHeader("Accept-Ranges", "bytes")
+            }
         } catch (e: Exception) {
-            Timber.e(" Exception " + e.toString())
+            Timber.e(e)
             newFixedLengthResponse(Status.INTERNAL_ERROR, mimeType, ResponseStatus.FAILURE_RESPONSE)
         }
-
-    }
-
-    private fun createResponse(status: Status, mimeType: String, message: String): Response {
-        val response = newFixedLengthResponse(status, mimeType, message)
-        response.addHeader("Accept-Ranges", "bytes")
-        return response
     }
 }

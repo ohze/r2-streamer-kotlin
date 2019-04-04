@@ -27,19 +27,15 @@ const val mimetypePNG = "image/png"
  *                  get name of the resource, creating the Publication
  *                  for rendering
  */
-
 class CbzParser : PublicationParser {
-
     /**
      * Check if path exist, generate a container for CBZ file
      *                   then check if creation was a success
      */
     private fun generateContainerFrom(path: String): ContainerCbz {
-        val container: ContainerCbz?
-
         if (!File(path).exists())
             throw Exception("Missing File")
-        container = ContainerCbz(path)
+        val container = ContainerCbz(path)
         if (!container.successCreated)
             throw Exception("Missing File")
         return container

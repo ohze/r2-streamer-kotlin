@@ -19,7 +19,11 @@ import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 import java.util.zip.ZipFile
 
-class ContainerEpub : EpubContainer, ZipArchiveContainer {
+class ContainerEpub(path: String) : EpubContainer, ZipArchiveContainer {
+    override val rootFile = RootFile(path, mimetype)
+    override val zipFile = ZipFile(path)
+    override var drm: Drm? = null
+    override val successCreated: Boolean = File(path).exists()
 
     override fun xmlDocumentForFile(relativePath: String): XmlParser {
         val containerData = data(relativePath)
@@ -41,20 +45,6 @@ class ContainerEpub : EpubContainer, ZipArchiveContainer {
         if (pathFile.first() == '/')
             pathFile = pathFile.substring(1)
         return xmlDocumentForFile(pathFile)
-    }
-
-    override var rootFile: RootFile
-    override var zipFile: ZipFile
-    override var drm: Drm? = null
-    override var successCreated: Boolean = false
-
-    constructor(path: String) {
-
-        if (File(path).exists()) {
-            successCreated = true
-        }
-        zipFile = ZipFile(path)
-        rootFile = RootFile(path, mimetype)
     }
 
     override fun scanForDrm(): Drm? {

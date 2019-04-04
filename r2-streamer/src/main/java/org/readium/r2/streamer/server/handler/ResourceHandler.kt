@@ -12,7 +12,6 @@ package org.readium.r2.streamer.server.handler
 import android.util.Log
 import org.nanohttpd.protocols.http.IHTTPSession
 import org.nanohttpd.protocols.http.NanoHTTPD.MIME_PLAINTEXT
-import org.nanohttpd.protocols.http.response.IStatus
 import org.nanohttpd.protocols.http.response.Response
 import org.nanohttpd.protocols.http.response.Response.newChunkedResponse
 import org.nanohttpd.protocols.http.response.Response.newFixedLengthResponse
@@ -25,18 +24,11 @@ import java.io.InputStream
 
 
 class ResourceHandler : RouterNanoHTTPD.DefaultHandler() {
+    override fun getMimeType(): String? = null
 
-    override fun getMimeType(): String? {
-        return null
-    }
+    override fun getText() = ResponseStatus.FAILURE_RESPONSE
 
-    override fun getText(): String {
-        return ResponseStatus.FAILURE_RESPONSE
-    }
-
-    override fun getStatus(): IStatus {
-        return Status.OK
-    }
+    override fun getStatus() = Status.OK
 
     override fun get(uriResource: RouterNanoHTTPD.UriResource?, urlParams: Map<String, String>?,
                      session: IHTTPSession?): Response? {
@@ -134,21 +126,17 @@ class ResourceHandler : RouterNanoHTTPD.DefaultHandler() {
         return response ?: getResponse("Error 404: File not found")
     }
 
-    private fun createResponse(status: Status, mimeType: String, message: InputStream): Response {
-        val response = newChunkedResponse(status, mimeType, message)
-        response.addHeader("Accept-Ranges", "bytes")
-        return response
+    private fun createResponse(status: Status, mimeType: String, message: InputStream) =
+        newChunkedResponse(status, mimeType, message).apply {
+            addHeader("Accept-Ranges", "bytes")
     }
 
-    private fun createResponse(status: Status, mimeType: String, message: String): Response {
-        val response = newFixedLengthResponse(status, mimeType, message)
-        response.addHeader("Accept-Ranges", "bytes")
-        return response
+    private fun createResponse(status: Status, mimeType: String, message: String) =
+        newFixedLengthResponse(status, mimeType, message).apply {
+            addHeader("Accept-Ranges", "bytes")
     }
 
-    private fun getResponse(message: String): Response {
-        return createResponse(Status.OK, "text/plain", message)
-    }
+    private fun getResponse(message: String) = createResponse(Status.OK, "text/plain", message)
 
     private fun getHref(path: String): String {
         val offset = path.indexOf("/", 0)

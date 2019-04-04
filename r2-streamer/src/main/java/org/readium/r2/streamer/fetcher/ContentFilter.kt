@@ -18,8 +18,8 @@ import java.io.File
 import java.io.InputStream
 
 interface ContentFilters {
-    var fontDecoder: FontDecoder
-    var drmDecoder: DrmDecoder
+    val fontDecoder: FontDecoder
+    val drmDecoder: DrmDecoder
 
     fun apply(input: InputStream, publication: Publication, container: Container, path: String): InputStream {
         return input
@@ -31,9 +31,8 @@ interface ContentFilters {
 }
 
 class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilters {
-
-    override var fontDecoder = FontDecoder()
-    override var drmDecoder = DrmDecoder()
+    override val fontDecoder = FontDecoder()
+    override val drmDecoder = DrmDecoder()
 
     override fun apply(input: InputStream, publication: Publication, container: Container, path: String): InputStream {
         publication.linkWithHref(path)?.let { resourceLink ->
@@ -282,8 +281,6 @@ class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilte
         }
         return string
     }
-
-
 }
 
 val ltrPreset: MutableMap<ReadiumCSSName, Boolean> = mutableMapOf(
@@ -327,9 +324,7 @@ val userSettingsUIPreset: MutableMap<ContentLayoutStyle, MutableMap<ReadiumCSSNa
         ContentLayoutStyle.layout("cjkh") to cjkHorizontalPreset
 )
 
-
 class ContentFiltersCbz : ContentFilters {
-    override var fontDecoder: FontDecoder = FontDecoder()
-    override var drmDecoder: DrmDecoder = DrmDecoder()
+    override val fontDecoder: FontDecoder = FontDecoder()
+    override val drmDecoder: DrmDecoder = DrmDecoder()
 }
-

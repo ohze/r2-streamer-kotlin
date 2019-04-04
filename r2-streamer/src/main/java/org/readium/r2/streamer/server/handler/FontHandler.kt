@@ -9,39 +9,31 @@
 
 package org.readium.r2.streamer.server.handler
 
-
 import android.webkit.MimeTypeMap
 import org.nanohttpd.protocols.http.IHTTPSession
-import org.nanohttpd.protocols.http.response.IStatus
 import org.nanohttpd.protocols.http.response.Response
 import org.nanohttpd.protocols.http.response.Response.newFixedLengthResponse
+import org.nanohttpd.protocols.http.response.Response.newChunkedResponse
 import org.nanohttpd.protocols.http.response.Status
 import org.nanohttpd.router.RouterNanoHTTPD
 import org.readium.r2.streamer.server.Fonts
 import timber.log.Timber
-import java.io.InputStream
-
 
 class FontHandler : RouterNanoHTTPD.DefaultHandler() {
+    override fun getMimeType(): String? = null
 
-    override fun getMimeType(): String? {
-        return null
-    }
+    override fun getText() = ResponseStatus.FAILURE_RESPONSE
 
-    override fun getText(): String {
-        return ResponseStatus.FAILURE_RESPONSE
-    }
-
-    override fun getStatus(): IStatus {
-        return Status.OK
-    }
+    override fun getStatus() = Status.OK
 
     override fun get(uriResource: RouterNanoHTTPD.UriResource?, urlParams: Map<String, String>?, session: IHTTPSession): Response {
         Timber.v("%s: %s", session.method, session.uri)
         return try {
             val uri = session.uri.substringAfterLast('/')
             val resources = uriResource!!.initParameter(Fonts::class.java)
-            createResponse(Status.OK, getMimeType(uri), resources.get(uri).inputStream())
+            newChunkedResponse(Status.OK, getMimeType(uri), resources.get(uri).inputStream()).apply {
+                addHeader("Accept-Ranges", "bytes")
+            }
         } catch (e: Exception) {
             Timber.e(e)
             newFixedLengthResponse(Status.INTERNAL_ERROR, mimeType, ResponseStatus.FAILURE_RESPONSE)
@@ -53,11 +45,4 @@ class FontHandler : RouterNanoHTTPD.DefaultHandler() {
         "otf" -> "application/vnd.ms-opentype"
         else -> "application/vnd.ms-opentype"
     }
-
-    private fun createResponse(status: Status, mimeType: String, message: InputStream): Response {
-        val response = Response.newChunkedResponse(status, mimeType, message)
-        response.addHeader("Accept-Ranges", "bytes")
-        return response
-    }
-
 }

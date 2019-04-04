@@ -38,12 +38,6 @@ const val mimetypeOEBPS = "application/oebps-package+xml"
 const val mediaOverlayURL = "media-overlay?resource="
 
 class EpubParser : PublicationParser {
-
-    private val opfParser = OPFParser()
-    private val ndp = NavigationDocumentParser()
-    private val ncxp = NCXParser()
-    private val encp = EncryptionParser()
-
     private fun generateContainerFrom(path: String): EpubContainer {
         val isDirectory = File(path).isDirectory
         val container: EpubContainer?
@@ -95,7 +89,8 @@ class EpubParser : PublicationParser {
         xmlParser.parseXml(documentData.inputStream())
 
         val epubVersion = xmlParser.root().attributes["version"]!!.toDouble()
-        val publication = opfParser.parseOpf(xmlParser, container.rootFile.rootFilePath, epubVersion)
+        val opfParser = OPFParser(container.rootFile.rootFilePath)
+        val publication = opfParser.parseOpf(xmlParser, epubVersion)
                 ?: return null
 
         val drm = container.scanForDrm()
@@ -148,25 +143,23 @@ class EpubParser : PublicationParser {
 
         publication.cssStyle = contentLayoutStyle.name
 
-        userSettingsUIPreset.get(ContentLayoutStyle.layout(publication.cssStyle as String))?.let {
-            if (publication.type == Publication.TYPE.WEBPUB) {
-                publication.userSettingsUIPreset = forceScrollPreset
-            } else {
-                publication.userSettingsUIPreset = it
-            }
+        userSettingsUIPreset[ContentLayoutStyle.layout(publication.cssStyle!!)]?.let {
+            publication.userSettingsUIPreset =
+                if (publication.type == Publication.TYPE.WEBPUB) forceScrollPreset
+                else it
         }
     }
 
     private fun fillEncryptionProfile(publication: Publication, drm: Drm?): Publication {
         drm?.let {
             for (link in publication.resources) {
-                if (link.properties.encryption?.scheme == it.scheme) {
-                    link.properties.encryption?.profile = it.profile
+                link.properties.encryption?.apply {
+                    if (scheme == it.scheme) profile = it.profile
                 }
             }
             for (link in publication.readingOrder) {
-                if (link.properties.encryption?.scheme == it.scheme) {
-                    link.properties.encryption?.profile = it.profile
+                link.properties.encryption?.apply {
+                    if (scheme == it.scheme) profile = it.profile
                 }
             }
         }
@@ -182,12 +175,18 @@ class EpubParser : PublicationParser {
         val document = XmlParser()
         document.parseXml(documentData.inputStream())
         val encryptedDataElements = document.getFirst("encryption")?.get("EncryptedData") ?: return
+        val encp = EncryptionParser()
         for (encryptedDataElement in encryptedDataElements) {
             val encryption = Encryption()
-            val keyInfoUri = encryptedDataElement.getFirst("KeyInfo")?.getFirst("RetrievalMethod")?.let { it.attributes["URI"] }
+            val keyInfoUri = encryptedDataElement
+                .getFirst("KeyInfo")
+                ?.getFirst("RetrievalMethod")
+                ?.let { it.attributes["URI"] }
             if (keyInfoUri == "license.lcpl#/encryption/content_key" && drm?.brand == Drm.Brand.Lcp)
                 encryption.scheme = Drm.Scheme.Lcp
-            encryption.algorithm = encryptedDataElement.getFirst("EncryptionMethod")?.let { it.attributes["Algorithm"] }
+            encryption.algorithm = encryptedDataElement
+                .getFirst("EncryptionMethod")
+                ?.let { it.attributes["Algorithm"] }
             encp.parseEncryptionProperties(encryptedDataElement, encryption)
             encp.add(encryption, publication, encryptedDataElement)
         }
@@ -209,15 +208,17 @@ class EpubParser : PublicationParser {
             Log.e("Error", "Navigation parsing", e)
             return
         }
-
-        ndp.navigationDocumentPath = navLink.href ?: return
-        publication.tableOfContents.plusAssign(ndp.tableOfContent(navByteArray))
-        publication.landmarks.plusAssign(ndp.landmarks(navDocument))
-        publication.listOfAudioFiles.plusAssign(ndp.listOfAudiofiles(navDocument))
-        publication.listOfIllustrations.plusAssign(ndp.listOfIllustrations(navDocument))
-        publication.listOfTables.plusAssign(ndp.listOfTables(navDocument))
-        publication.listOfVideos.plusAssign(ndp.listOfVideos(navDocument))
-        publication.pageList.plusAssign(ndp.pageList(navDocument))
+        val navigationDocumentPath = navLink.href ?: return
+        val ndp = NavigationDocumentParser(navigationDocumentPath)
+        publication.apply {
+            tableOfContents.plusAssign(ndp.tableOfContent(navByteArray))
+            landmarks.plusAssign(ndp.landmarks(navDocument))
+            listOfAudioFiles.plusAssign(ndp.listOfAudiofiles(navDocument))
+            listOfIllustrations.plusAssign(ndp.listOfIllustrations(navDocument))
+            listOfTables.plusAssign(ndp.listOfTables(navDocument))
+            listOfVideos.plusAssign(ndp.listOfVideos(navDocument))
+            pageList.plusAssign(ndp.pageList(navDocument))
+        }
     }
 
     private fun parseNcxDocument(container: EpubContainer, publication: Publication) {
@@ -229,12 +230,13 @@ class EpubParser : PublicationParser {
             Log.e("Error", "Ncx parsing", e)
             return
         }
-        ncxp.ncxDocumentPath = ncxLink.href ?: return
-        if (publication.tableOfContents.isEmpty())
-            publication.tableOfContents.plusAssign(ncxp.tableOfContents(ncxDocument))
-        if (publication.pageList.isEmpty())
-            publication.pageList.plusAssign(ncxp.pageList(ncxDocument))
-        return
+        val ncxDocumentPath = ncxLink.href ?: return
+        val ncxp = NCXParser(ncxDocumentPath)
+        publication.apply {
+            if (tableOfContents.isEmpty())
+                tableOfContents.plusAssign(ncxp.tableOfContents(ncxDocument))
+            if (pageList.isEmpty())
+                pageList.plusAssign(ncxp.pageList(ncxDocument))
+        }
     }
-
 }

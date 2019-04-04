@@ -16,21 +16,11 @@ import java.io.File
 import java.util.zip.ZipFile
 
 
-class ContainerCbz : CbzContainer, ZipArchiveContainer {
-
-    override var rootFile: RootFile
-    override var zipFile: ZipFile
+class ContainerCbz(path: String) : CbzContainer, ZipArchiveContainer {
+    override val rootFile = RootFile(path, mimetypeCBZ)
+    override val zipFile = ZipFile(path)
     override var drm: Drm? = null
-    override var successCreated: Boolean = false
-
-    constructor(path: String) {
-
-        if (File(path).exists()) {
-            successCreated = true
-        }
-        zipFile = ZipFile(path)
-        rootFile = RootFile(path, mimetypeCBZ)
-    }
+    override val successCreated: Boolean = File(path).exists()
 
     override fun getFilesList(): List<String> {
         val filesList = mutableListOf<String>()

@@ -32,12 +32,11 @@ import java.io.InputStream
  * @func dataInputStream : return the InputStream of content
  */
 interface Container {
-
-    var rootFile: RootFile
+    val rootFile: RootFile
 
     var drm: Drm?
 
-    var successCreated: Boolean
+    val successCreated: Boolean
 
     fun data(relativePath: String): ByteArray
 
@@ -54,7 +53,6 @@ interface Container {
  *  @func xmlDocumentForResource : return the XmlParser of a link
  */
 interface EpubContainer : Container {
-
     fun xmlDocumentForFile(relativePath: String): XmlParser
     fun xmlDocumentForResource(link: Link?): XmlParser
     fun xmlAsByteArray(link: Link?): ByteArray
