@@ -28,17 +28,16 @@ class Fetcher(val publication: Publication, val container: Container, private va
         contentFilters = getContentFilters(container.rootFile.mimetype)
     }
 
-    fun data(path: String): ByteArray? {
-        var data: ByteArray? = container.data(path)
-        if (data != null)
-            data = contentFilters?.apply(data, publication, container, path)
-        return data
+    fun data(path: String): ByteArray {
+        return container.data(path).let {
+            contentFilters.apply(it, publication, container, path)
+        }
     }
 
     fun dataStream(path: String): InputStream {
-        var inputStream = container.dataInputStream(path)
-        inputStream = contentFilters?.apply(inputStream, publication, container, path) ?: inputStream
-        return inputStream
+        return container.dataInputStream(path).let {
+            contentFilters.apply(it, publication, container, path)
+        }
     }
 
     fun dataLength(path: String): Long {
