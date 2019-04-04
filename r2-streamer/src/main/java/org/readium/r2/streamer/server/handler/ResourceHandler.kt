@@ -20,7 +20,7 @@ import org.readium.r2.streamer.fetcher.Fetcher
 import timber.log.Timber
 import java.io.IOException
 import java.io.InputStream
-
+import kotlin.math.max
 
 class ResourceHandler : RouterNanoHTTPD.DefaultHandler() {
     override fun getMimeType(): String? = null
@@ -29,11 +29,11 @@ class ResourceHandler : RouterNanoHTTPD.DefaultHandler() {
 
     override fun getStatus() = Status.OK
 
-    override fun get(uriResource: RouterNanoHTTPD.UriResource?, urlParams: Map<String, String>?,
+    override fun get(uriResource: RouterNanoHTTPD.UriResource, urlParams: Map<String, String>?,
                      session: IHTTPSession?): Response? {
         try {
             Timber.v("Method: ${session!!.method}, Uri: ${session.uri}")
-            val fetcher = uriResource!!.initParameter(Fetcher::class.java)
+            val fetcher = uriResource.initParameter(Fetcher::class.java)
 
             val filePath = getHref(session.uri)
             val link = fetcher.publication.linkWithHref(filePath)
@@ -57,83 +57,83 @@ class ResourceHandler : RouterNanoHTTPD.DefaultHandler() {
         }
     }
 
-    private fun serveResponse(session: IHTTPSession, inputStream: InputStream, mimeType: String): Response {
-        var response: Response?
-        var rangeRequest: String? = session.headers["range"]
+    data class RangeQuery(val start: Long, var end: Long) {
+        fun checkEnd(streamLength: Long) {
+            if (end < 0) end = streamLength - 1
+        }
+        fun contentLen() = max(0L, end - start + 1)
+        fun contentRange(streamLength: Long) = "bytes $start-$end/$streamLength"
+    }
 
+    /** Support skipping
+     * return [start, end] as byte index in inputStream
+     * if session.headers["range"] in form: bytes=start-end */
+    private fun rangeQuery(session: IHTTPSession): RangeQuery? {
+        val r: String = session.headers["range"] ?: return null
+        if (!r.startsWith("bytes=")) return null
+        val l = "bytes=".length
+        val minusIdx = r.indexOf('-', l)
+        if (minusIdx < 0) return null
+        return try {
+            val start = r.substring(l, l + minusIdx).toLong()
+            val end = r.substring(l + minusIdx + 1).toLong()
+            RangeQuery(start, end)
+        } catch (e: NumberFormatException) {
+            null
+        }
+    }
+
+    private fun serveResponse(session: IHTTPSession, inputStream: InputStream, mimeType: String): Response {
         try {
             // Calculate etag
             val etag = Integer.toHexString(inputStream.hashCode())
-
             // Support skipping:
-            var startFrom: Long = 0
-            var endAt: Long = -1
-            if (rangeRequest != null) {
-                if (rangeRequest.startsWith("bytes=")) {
-                    rangeRequest = rangeRequest.substring("bytes=".length)
-                    val minus = rangeRequest.indexOf('-')
-                    try {
-                        if (minus > 0) {
-                            startFrom = java.lang.Long.parseLong(rangeRequest.substring(0, minus))
-                            endAt = java.lang.Long.parseLong(rangeRequest.substring(minus + 1))
-                        }
-                    } catch (ignored: NumberFormatException) {
-                    }
-
-                }
-            }
-
+            val r = rangeQuery(session)
             // Change return code and add Content-Range header when skipping is requested
             val streamLength = inputStream.available().toLong()
-            if (rangeRequest != null && startFrom >= 0) {
-                if (startFrom >= streamLength) {
-                    response = createResponse(Status.RANGE_NOT_SATISFIABLE, MIME_PLAINTEXT, "")
-                    response.addHeader("Content-Range", "bytes 0-0/$streamLength")
-                    response.addHeader("ETag", etag)
-                } else {
-                    if (endAt < 0) {
-                        endAt = streamLength - 1
+            return when {
+                r != null && r.start >= 0 ->
+                    if (r.start >= streamLength) {
+                        createResponse(Status.RANGE_NOT_SATISFIABLE, MIME_PLAINTEXT, "").apply {
+                            addHeader("Content-Range", "bytes 0-0/$streamLength")
+                            addHeader("ETag", etag)
+                        }
+                    } else {
+                        r.checkEnd(streamLength)
+                        inputStream.skip(r.start)
+                        createResponse(Status.PARTIAL_CONTENT, mimeType, inputStream).apply {
+                            addHeader("Content-Length", r.contentLen().toString())
+                            addHeader("Content-Range", r.contentRange(streamLength))
+                            addHeader("ETag", etag)
+                        }
                     }
-                    var newLen = endAt - startFrom + 1
-                    if (newLen < 0) {
-                        newLen = 0
+                else ->
+                    if (etag == session.headers["if-none-match"])
+                        createResponse(Status.NOT_MODIFIED, mimeType, "")
+                    else {
+                        createResponse(Status.OK, mimeType, inputStream).apply {
+                            addHeader("Content-Length", streamLength.toString())
+                            addHeader("ETag", etag)
+                        }
                     }
-
-                    val dataLen = newLen
-                    inputStream.skip(startFrom)
-
-                    response = createResponse(Status.PARTIAL_CONTENT, mimeType, inputStream)
-                    response.addHeader("Content-Length", "" + dataLen)
-                    response.addHeader("Content-Range", "bytes $startFrom-$endAt/$streamLength")
-                    response.addHeader("ETag", etag)
-                }
-            } else {
-                if (etag == session.headers["if-none-match"])
-                    response = createResponse(Status.NOT_MODIFIED, mimeType, "")
-                else {
-                    response = createResponse(Status.OK, mimeType, inputStream)
-                    response.addHeader("Content-Length", "" + streamLength)
-                    response.addHeader("ETag", etag)
-                }
             }
         } catch (ioe: IOException) {
-            response = getResponse("Forbidden: Reading file failed")
+            return getResponse("Forbidden: Reading file failed")
         } catch (ioe: NullPointerException) {
-            response = getResponse("Forbidden: Reading file failed")
+            return getResponse("Forbidden: Reading file failed")
         }
-
-        return response ?: getResponse("Error 404: File not found")
+//        return getResponse("Error 404: File not found")
     }
 
     private fun createResponse(status: Status, mimeType: String, message: InputStream) =
         newChunkedResponse(status, mimeType, message).apply {
             addHeader("Accept-Ranges", "bytes")
-    }
+        }
 
     private fun createResponse(status: Status, mimeType: String, message: String) =
         newFixedLengthResponse(status, mimeType, message).apply {
             addHeader("Accept-Ranges", "bytes")
-    }
+        }
 
     private fun getResponse(message: String) = createResponse(Status.OK, "text/plain", message)
 
