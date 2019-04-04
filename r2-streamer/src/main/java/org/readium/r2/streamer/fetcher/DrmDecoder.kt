@@ -9,18 +9,15 @@
 
 package org.readium.r2.streamer.fetcher
 
-import android.util.Log
 import org.readium.r2.shared.drm.Drm
 import org.readium.r2.shared.Link
+import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.zip.Inflater
 
-
 class DrmDecoder {
-
-
     fun decoding(input: InputStream, resourceLink: Link, drm: Drm?): InputStream {
 
         val scheme = resourceLink.properties.encryption?.scheme?.let {
@@ -30,9 +27,7 @@ class DrmDecoder {
         }
 
         drm?.let {
-
             if (scheme == drm.scheme) {
-
                 var data = decipher(input, drm) ?: return input
 
                 if (resourceLink.properties.encryption?.compression == "deflate") {
@@ -48,13 +43,13 @@ class DrmDecoder {
                             val count = inflater.inflate(buf)
                             output.write(buf, 0, count)
                         } catch (e: Exception) {
-                            Log.e("output.write", e.message)
+                            Timber.e(e)
                         }
                     }
                     try {
                         output.close()
                     } catch (e: Exception) {
-                        Log.e("output.close", e.message)
+                        Timber.e(e)
                     }
                     data = output.toByteArray()
                     
@@ -66,16 +61,11 @@ class DrmDecoder {
         } ?: run {
             return input
         }
-
     }
-
 
     private fun decipher(input: InputStream, drm: Drm): ByteArray? {
         val drmLicense = drm.license ?: return null
         val buffer = input.readBytes()
         return drmLicense.decipher(buffer)
     }
-
-
 }
-
