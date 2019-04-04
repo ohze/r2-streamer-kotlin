@@ -35,47 +35,37 @@ class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilte
     override val drmDecoder = DrmDecoder()
 
     override fun apply(input: InputStream, publication: Publication, container: Container, path: String): InputStream {
-        publication.linkWithHref(path)?.let { resourceLink ->
-            var decodedInputStream = drmDecoder.decoding(input, resourceLink, container.drm)
-            decodedInputStream = fontDecoder.decoding(decodedInputStream, publication, path)
-            if ((resourceLink.typeLink == "application/xhtml+xml" || resourceLink.typeLink == "text/html")) {
-                decodedInputStream =
-                    if (publication.metadata.rendition.layout == RenditionLayout.Reflowable
-                        && (resourceLink.properties.layout == null
-                            || resourceLink.properties.layout == "reflowable")) {
-                        injectReflowableHtml(decodedInputStream, publication)
-                    } else {
-                        injectFixedLayoutHtml(decodedInputStream)
-                    }
-            }
+        val resourceLink = publication.linkWithHref(path) ?: return input
+        return apply(input, publication, container, path, resourceLink)
+    }
 
-            return decodedInputStream
-        } ?: run {
-            return input
+    private fun apply(input: InputStream,
+                      publication: Publication,
+                      container: Container,
+                      path: String,
+                      resourceLink: Link): InputStream {
+        val decodedInputStream = drmDecoder.decoding(input, resourceLink, container.drm).let {
+            fontDecoder.decoding(it, publication, path)
+        }
+
+        return if (resourceLink.typeLink != "application/xhtml+xml" && resourceLink.typeLink != "text/html") {
+            decodedInputStream
+        } else {
+            val reflowable = publication.metadata.rendition.layout == RenditionLayout.Reflowable
+                && (resourceLink.properties.layout == null
+                || resourceLink.properties.layout == "reflowable")
+            if (reflowable) {
+                injectReflowableHtml(decodedInputStream, publication)
+            } else {
+                injectFixedLayoutHtml(decodedInputStream)
+            }
         }
     }
 
     override fun apply(input: ByteArray, publication: Publication, container: Container, path: String): ByteArray {
-        publication.linkWithHref(path)?.let { resourceLink ->
-            val inputStream = input.inputStream()
-            var decodedInputStream = drmDecoder.decoding(inputStream, resourceLink, container.drm)
-            decodedInputStream = fontDecoder.decoding(decodedInputStream, publication, path)
-            val baseUrl = publication.baseUrl()?.removeLastComponent()
-            if ((resourceLink.typeLink == "application/xhtml+xml" || resourceLink.typeLink == "text/html")
-                    && baseUrl != null) {
-                decodedInputStream =
-                    if (publication.metadata.rendition.layout == RenditionLayout.Reflowable
-                        && (resourceLink.properties.layout == null
-                            || resourceLink.properties.layout == "reflowable")) {
-                        injectReflowableHtml(decodedInputStream, publication)
-                    } else {
-                        injectFixedLayoutHtml(decodedInputStream)
-                    }
-            }
-            return decodedInputStream.readBytes()
-        } ?: run {
-            return input
-        }
+        val resourceLink = publication.linkWithHref(path) ?: return input
+        // val baseUrl = publication.baseUrl()?.removeLastComponent()
+        return apply(input.inputStream(), publication, container, path, resourceLink).readBytes()
     }
 
     private fun injectReflowableHtml(stream: InputStream, publication: Publication): InputStream {
