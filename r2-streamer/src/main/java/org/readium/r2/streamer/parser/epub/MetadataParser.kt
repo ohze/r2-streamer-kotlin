@@ -156,20 +156,20 @@ class MetadataParser {
     }
 
     fun parseMediaDurations(metadataElement: Node, otherMetadata: MutableList<MetadataItem>): MutableList<MetadataItem> {
-        var metadata = otherMetadata
-        val metas = metadataElement.get("meta")!!
-        if (metas.isEmpty())
-            return metadata
-        val mediaDurationItems = metas.filter { it.attributes["property"] == "media:duration" }
-        if (mediaDurationItems.isEmpty())
-            return metadata
-        for (mediaDurationItem in mediaDurationItems) {
+        val ret = ArrayList<MetadataItem>(otherMetadata)
+        for (it in metadataElement.children) {
+            if (it.name != "meta" ||
+                it.attributes["property"] != "media:duration")
+                continue
+
             val item = MetadataItem()
-            item.property = mediaDurationItem.attributes["refines"]
-            item.value = mediaDurationItem.text
-            metadata = otherMetadata.plus(item).toMutableList()
+            item.property = it.attributes["refines"]
+            item.value = it.text
+            // FIXME old code assign ret = otherMetadata.plus(item).toMutableList()
+            // so, it will actually add only the last item in the for loop
+            ret.add(item)
         }
-        return metadata
+        return ret
     }
 
     // Return the XML element corresponding to the main title (title having
