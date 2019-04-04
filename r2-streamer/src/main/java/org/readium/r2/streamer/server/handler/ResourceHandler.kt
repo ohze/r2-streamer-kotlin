@@ -36,21 +36,21 @@ class ResourceHandler : RouterNanoHTTPD.DefaultHandler() {
             val fetcher = uriResource.initParameter(Fetcher::class.java)
 
             val filePath = getHref(session.uri)
-            val link = fetcher.publication.linkWithHref(filePath)
+            val link = fetcher.box.publication.linkWithHref(filePath)
                 ?: return newFixedLengthResponse(Status.NOT_FOUND, "text/html", byteArrayOf())
             val mimeType = link.typeLink!!
 
             // If the content is of type html return the response this is done to
             // skip the check for following font deobfuscation check
             if (mimeType == "application/xhtml+xml") {
-                return serveResponse(session, fetcher.dataStream(filePath), mimeType)
+                return serveResponse(session, fetcher.dataStream(filePath, link), mimeType)
             }
 
             // ********************
             //  FONT DEOBFUSCATION
             // ********************
 
-            return serveResponse(session, fetcher.dataStream(filePath), mimeType)
+            return serveResponse(session, fetcher.dataStream(filePath, link), mimeType)
         } catch (e: Exception) {
             Timber.e(e)
             return newFixedLengthResponse(Status.INTERNAL_ERROR, mimeType, ResponseStatus.FAILURE_RESPONSE)

@@ -17,7 +17,9 @@ import org.readium.r2.shared.Locations
 import org.readium.r2.shared.Locator
 import org.readium.r2.shared.LocatorText
 import org.readium.r2.streamer.ClientAppContext
+import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.fetcher.Fetcher
+import org.readium.r2.streamer.parser.PubBox
 import timber.log.Timber
 import java.net.URLDecoder
 import java.util.*
@@ -37,14 +39,14 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
         Timber.v("%s: %s", session.method, session.uri)
 
         return try {
-            val fetcher = uriResource.initParameter(Fetcher::class.java)
+            val pubBox = uriResource.initParameter(PubBox::class.java)
             val spineIndex = session.parameters["spineIndex"]?.get(0)?.toInt() ?: -1
-            val link = fetcher.publication.readingOrder[spineIndex]
+            val link = pubBox.publication.readingOrder[spineIndex]
             val searchQueryEncoded = session.parameters["query"]?.get(0)
             val searchQuery = URLDecoder.decode(searchQueryEncoded, "UTF-8")
 
             //val responseSearchLocators = rangyFindSolution(link, searchQuery, fetcher)
-            val responseSearchLocators = find(link, searchQuery, fetcher, false)
+            val responseSearchLocators = find(link, searchQuery, pubBox.container, false)
 
             val objectMapper = ObjectMapper()
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -58,14 +60,14 @@ class SearchQueryHandler : RouterNanoHTTPD.DefaultHandler() {
     }
 
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-    private fun find(link: Link, searchQuery: String, fetcher: Fetcher, useRangy: Boolean): MutableList<Locator> {
+    private fun find(link: Link, searchQuery: String, container: Container, useRangy: Boolean): MutableList<Locator> {
         Timber.d("-> find using rangy: %b -> %s", useRangy, link.href)
 
         if (link.typeLink != "application/xhtml+xml")
             return mutableListOf()
 
         val href = link.href!!.substring(1)
-        val fileData = String(fetcher.container.data(href))
+        val fileData = String(container.data(href))
 
         val handler = Handler(Looper.getMainLooper())
         handler.postAtFrontOfQueue {

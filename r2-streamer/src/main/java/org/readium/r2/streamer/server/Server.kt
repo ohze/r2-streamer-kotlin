@@ -16,6 +16,7 @@ import org.readium.r2.readText
 import org.readium.r2.shared.Publication
 import org.readium.r2.streamer.container.Container
 import org.readium.r2.streamer.fetcher.Fetcher
+import org.readium.r2.streamer.parser.PubBox
 import org.readium.r2.streamer.server.handler.*
 import org.readium.r2.toFile
 import java.io.File
@@ -73,19 +74,26 @@ abstract class AbstractServer(port: Int) : RouterNanoHTTPD("127.0.0.1", port) {
         addFont("OpenDyslexic-Regular.otf", assets, context)
     }
 
+    @Deprecated(
+        message = "use addEpub(PubBox,..)",
+        replaceWith = ReplaceWith("addEpub(PubBox,.."))
     fun addEpub(publication: Publication, container: Container, fileName: String, userPropertiesPath: String?) {
-        val fetcher = Fetcher(publication, container, userPropertiesPath)
+        addEpub(PubBox(publication, container), fileName, userPropertiesPath)
+    }
 
-        addLinks(publication, fileName)
+    fun addEpub(box: PubBox, fileName: String, userPropertiesPath: String?, autoInjectHtml: Boolean = true) {
+        val fetcher = Fetcher(box, userPropertiesPath, autoInjectHtml)
 
-        publication.addSelfLink(fileName, URL("$BASE_URL:$myPort"))
+        addLinks(box.publication, fileName)
+
+        box.publication.addSelfLink(fileName, URL("$BASE_URL:$myPort"))
 
         if (containsMediaOverlay) {
-            addRoute(fileName + MEDIA_OVERLAY_HANDLE, MediaOverlayHandler::class.java, publication)
+            addRoute(fileName + MEDIA_OVERLAY_HANDLE, MediaOverlayHandler::class.java, box.publication)
         }
-        addRoute(fileName + JSON_MANIFEST_HANDLE, ManifestHandler::class.java, publication)
-        addRoute(fileName + MANIFEST_HANDLE, ManifestHandler::class.java, publication)
-        addRoute(fileName + SEARCH_HANDLE, SearchQueryHandler::class.java, fetcher)
+        addRoute(fileName + JSON_MANIFEST_HANDLE, ManifestHandler::class.java, box.publication)
+        addRoute(fileName + MANIFEST_HANDLE, ManifestHandler::class.java, box.publication)
+        addRoute(fileName + SEARCH_HANDLE, SearchQueryHandler::class.java, box)
         addRoute(fileName + MANIFEST_ITEM_HANDLE, ResourceHandler::class.java, fetcher)
         addRoute(JS_HANDLE, JSHandler::class.java, resources)
         addRoute(CSS_HANDLE, CSSHandler::class.java, resources)

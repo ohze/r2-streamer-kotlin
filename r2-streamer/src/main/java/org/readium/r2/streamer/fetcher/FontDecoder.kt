@@ -9,10 +9,11 @@
 
 package org.readium.r2.streamer.fetcher
 
-import android.util.Log
 import org.readium.r2.toHexBytes
 import org.readium.r2.sha1
+import org.readium.r2.shared.Link
 import org.readium.r2.shared.Publication
+import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import kotlin.experimental.xor
@@ -29,17 +30,20 @@ class FontDecoder {
             "http://ns.adobe.com/pdf/enc#RC" to adobe
     )
 
-    fun decoding(input: InputStream, publication: Publication, path: String): InputStream {
-        val publicationIdentifier = publication.metadata.identifier
-        val link = publication.linkWithHref(path) ?: return input
+    fun decoding(input: InputStream, pubId: String, link: Link): InputStream {
         val encryption = link.properties.encryption ?: return input
         val algorithm = encryption.algorithm ?: return input
         val type = decoders[link.properties.encryption?.algorithm] ?: return input
         if (!decodableAlgorithms.values.contains(algorithm)) {
-            Log.e("Error", "$path is encrypted, but can't handle it")
+            Timber.e("$${link.href} is encrypted, but can't handle it")
             return input
         }
-        return decodingFont(input, publicationIdentifier, type)
+        return decodingFont(input, pubId, type)
+    }
+
+    fun decoding(input: InputStream, publication: Publication, path: String): InputStream {
+        val link = publication.linkWithHref(path) ?: return input
+        return decoding(input, publication.metadata.identifier, link)
     }
 
     private fun decodingFont(input: InputStream, pubId: String, length: Int): ByteArrayInputStream {
@@ -53,7 +57,7 @@ class FontDecoder {
     private fun deobfuscate(input: InputStream, publicationKey: ByteArray, obfuscationLength: Int): ByteArray {
         val buffer = input.readBytes()
         val count = if (buffer.size > obfuscationLength) obfuscationLength else buffer.size
-        for (i in 0..(count - 1))
+        for (i in 0 until count)
             buffer[i] = buffer[i].xor(publicationKey[i % publicationKey.size])
         return buffer
     }

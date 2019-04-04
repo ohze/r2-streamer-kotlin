@@ -13,7 +13,7 @@ import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import org.readium.r2.shared.*
-import org.readium.r2.streamer.container.Container
+import org.readium.r2.streamer.parser.PubBox
 import java.io.File
 import java.io.InputStream
 
@@ -21,51 +21,38 @@ interface ContentFilters {
     val fontDecoder: FontDecoder
     val drmDecoder: DrmDecoder
 
-    fun apply(input: InputStream, publication: Publication, container: Container, path: String): InputStream {
-        return input
-    }
-
-    fun apply(input: ByteArray, publication: Publication, container: Container, path: String): ByteArray {
-        return input
-    }
+    fun apply(input: InputStream, box: PubBox, resourceLink: Link): InputStream
 }
 
-class ContentFiltersEpub(private val userPropertiesPath: String?) : ContentFilters {
+open class DecodingContentFilters : ContentFilters {
     override val fontDecoder = FontDecoder()
     override val drmDecoder = DrmDecoder()
 
-    override fun apply(input: InputStream, publication: Publication, container: Container, path: String): InputStream {
-        val resourceLink = publication.linkWithHref(path) ?: return input
-        return apply(input, publication, container, path, resourceLink)
+    override fun apply(input: InputStream, box: PubBox, resourceLink: Link): InputStream {
+        return drmDecoder.decoding(input, resourceLink, box.container.drm).let {
+            fontDecoder.decoding(it, box.publication.metadata.identifier, resourceLink)
+        }
     }
+}
 
-    private fun apply(input: InputStream,
-                      publication: Publication,
-                      container: Container,
-                      path: String,
-                      resourceLink: Link): InputStream {
-        val decodedInputStream = drmDecoder.decoding(input, resourceLink, container.drm).let {
-            fontDecoder.decoding(it, publication, path)
+class ContentFiltersEpub(private val userPropertiesPath: String?) : DecodingContentFilters() {
+    override fun apply(input: InputStream, box: PubBox, resourceLink: Link): InputStream {
+        val decodedInputStream = drmDecoder.decoding(input, resourceLink, box.container.drm).let {
+            fontDecoder.decoding(it, box.publication.metadata.identifier, resourceLink)
         }
 
         return if (resourceLink.typeLink != "application/xhtml+xml" && resourceLink.typeLink != "text/html") {
             decodedInputStream
         } else {
-            val reflowable = publication.metadata.rendition.layout == RenditionLayout.Reflowable
+            val reflowable = box.publication.metadata.rendition.layout == RenditionLayout.Reflowable
                 && (resourceLink.properties.layout == null
                 || resourceLink.properties.layout == "reflowable")
             if (reflowable) {
-                injectReflowableHtml(decodedInputStream, publication)
+                injectReflowableHtml(decodedInputStream, box.publication)
             } else {
                 injectFixedLayoutHtml(decodedInputStream)
             }
         }
-    }
-
-    override fun apply(input: ByteArray, publication: Publication, container: Container, path: String): ByteArray {
-        val resourceLink = publication.linkWithHref(path) ?: return input
-        // val baseUrl = publication.baseUrl()?.removeLastComponent()
-        return apply(input.inputStream(), publication, container, path, resourceLink).readBytes()
     }
 
     private fun injectReflowableHtml(stream: InputStream, publication: Publication): InputStream {
@@ -312,7 +299,4 @@ val userSettingsUIPreset: MutableMap<ContentLayoutStyle, MutableMap<ReadiumCSSNa
         ContentLayoutStyle.layout("cjkh") to cjkHorizontalPreset
 )
 
-class ContentFiltersCbz : ContentFilters {
-    override val fontDecoder: FontDecoder = FontDecoder()
-    override val drmDecoder: DrmDecoder = DrmDecoder()
-}
+class ContentFiltersCbz : DecodingContentFilters()
