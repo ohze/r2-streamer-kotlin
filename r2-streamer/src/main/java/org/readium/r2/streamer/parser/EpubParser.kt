@@ -173,7 +173,7 @@ class EpubParser : PublicationParser {
             return
         }
         val document = XmlParser()
-        document.parseXml(documentData.inputStream())
+        document.parseXml(documentData.inputStream(), true)
         val encryptedDataElements = document.getFirst("encryption")?.get("EncryptedData") ?: return
         val encp = EncryptionParser()
         for (encryptedDataElement in encryptedDataElements) {
