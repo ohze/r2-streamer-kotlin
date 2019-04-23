@@ -16,7 +16,6 @@ plugins {
 
 group='com.github.ohze'
 project.archivesBaseName = rootProject.name
-version = "1.1.0"
 
 android {
     flavorDimensions "testapp"
@@ -69,8 +68,8 @@ dependencies {
         devTestappImplementation project(':r2-shared')
         devTestappWithLcpImplementation project(':r2-shared')
     }
-    implementation "$group:r2-shared-kotlin:1.0.8-2"
-//    devFolioReaderImplementation("$group:r2-shared-kotlin:1.0.8-2") {
+    implementation "$group:r2-shared-kotlin:1.0.8-4"
+//    devFolioReaderImplementation("$group:r2-shared-kotlin:1.0.8-4") {
 //        changing = true
 //    }
 
