@@ -30,8 +30,8 @@ class FontHandler : RouterNanoHTTPD.DefaultHandler() {
         Timber.v("%s: %s", session.method, session.uri)
         return try {
             val uri = session.uri.substringAfterLast('/')
-            val resources = uriResource!!.initParameter(Fonts::class.java)
-            newChunkedResponse(Status.OK, getMimeType(uri), resources.get(uri).inputStream()).apply {
+            val fonts = uriResource!!.initParameter(Fonts::class.java)
+            newChunkedResponse(Status.OK, getMimeType(uri), fonts.get(uri).inputStream()).apply {
                 addHeader("Accept-Ranges", "bytes")
             }
         } catch (e: Exception) {
